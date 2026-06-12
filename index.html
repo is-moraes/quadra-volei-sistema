@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sistema de Reservas - Quadra de Vôlei</title>
+  <title>Sistema de Reservas - Quadra de Volei</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -12,7 +12,7 @@
 <div id="tela-login" class="tela ativa">
   <div class="auth-container">
     <div class="auth-box">
-      <h1 class="auth-title">🏐 Quadra de Vôlei</h1>
+      <h1 class="auth-title">&#127952; Quadra de Volei</h1>
       <p class="auth-subtitle">Sistema de Reservas</p>
       <div id="login-erro" class="msg error"></div>
       <div class="form-group">
@@ -21,7 +21,7 @@
       </div>
       <div class="form-group">
         <label>Senha</label>
-        <input type="password" id="login-senha" placeholder="••••••••" />
+        <input type="password" id="login-senha" placeholder="Minimo 6 caracteres" />
       </div>
       <button class="btn btn-primary btn-block" onclick="fazerLogin()">Entrar</button>
       <div class="auth-links">
@@ -37,28 +37,32 @@
   <div class="auth-container">
     <div class="auth-box">
       <h1 class="auth-title">Criar Conta</h1>
-      <div id="cadastro-msg" class="msg"></div>
+      <div id="cad-erro" class="msg error"></div>
       <div class="form-group">
         <label>Nome</label>
-        <input type="text" id="cadastro-nome" placeholder="Seu nome completo" />
+        <input type="text" id="cad-nome" placeholder="Seu nome completo" />
+      </div>
+      <div class="form-group">
+        <label>Telefone</label>
+        <input type="tel" id="cad-telefone" placeholder="(00) 00000-0000" />
       </div>
       <div class="form-group">
         <label>Email</label>
-        <input type="email" id="cadastro-email" placeholder="seu@email.com" />
+        <input type="email" id="cad-email" placeholder="seu@email.com" />
       </div>
       <div class="form-group">
         <label>Senha</label>
-        <input type="password" id="cadastro-senha" placeholder="Mínimo 6 caracteres" />
+        <input type="password" id="cad-senha" placeholder="Minimo 6 caracteres" />
       </div>
-      <button class="btn btn-primary btn-block" onclick="fazerCadastro()">Cadastrar</button>
+      <button class="btn btn-primary btn-block" onclick="fazerCadastro()">Criar Conta</button>
       <div class="auth-links">
-        <a href="#" onclick="mostrarTela('tela-login')">Já tenho conta</a>
+        <a href="#" onclick="mostrarTela('tela-login')">Ja tenho conta</a>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== TELA RECUPERAR SENHA ===== -->
+<!-- ===== TELA DE RECUPERAR SENHA ===== -->
 <div id="tela-recuperar" class="tela">
   <div class="auth-container">
     <div class="auth-box">
@@ -76,16 +80,34 @@
   </div>
 </div>
 
-<!-- ===== TELA BLOQUEADA ===== -->
+<!-- ===== TELA BLOQUEADO ===== -->
 <div id="tela-bloqueado" class="tela">
   <div class="auth-container">
     <div class="auth-box bloqueio-box">
-      <div class="bloqueio-icon">🔒</div>
-      <h2 class="auth-title">Acesso Bloqueado</h2>
-      <p class="bloqueio-msg" id="bloqueio-motivo">Sua licença está inativa ou expirada.</p>
-      <div class="bloqueio-info" id="bloqueio-info"></div>
-      <button class="btn btn-warning btn-block" onclick="solicitarRenovacao()">Solicitar Renovação</button>
-      <button class="btn btn-secondary btn-block" onclick="fazerLogout()">Sair</button>
+      <div class="bloqueio-icon">&#128274;</div>
+      <h2>Acesso Suspenso</h2>
+      <p id="msg-bloqueio" class="bloqueio-msg">Seu acesso foi suspenso pelo administrador.</p>
+      <div id="bloqueio-info" class="msg info"></div>
+      <div class="bloqueio-actions">
+        <button class="btn btn-secondary" onclick="solicitarRenovacao()">Solicitar Reativacao</button>
+        <button class="btn btn-outline" onclick="fazerLogout()">Sair</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TELA EXPIRADO ===== -->
+<div id="tela-expirado" class="tela">
+  <div class="auth-container">
+    <div class="auth-box bloqueio-box">
+      <div class="bloqueio-icon">&#9200;</div>
+      <h2>Assinatura Expirada</h2>
+      <p id="msg-expirado" class="bloqueio-msg">Sua assinatura expirou. Renove para continuar.</p>
+      <div id="expirado-info" class="msg info"></div>
+      <div class="bloqueio-actions">
+        <button class="btn btn-primary" onclick="solicitarRenovacao()">Renovar Agora</button>
+        <button class="btn btn-outline" onclick="fazerLogout()">Sair</button>
+      </div>
     </div>
   </div>
 </div>
@@ -93,32 +115,33 @@
 <!-- ===== TELA DASHBOARD ===== -->
 <div id="tela-dashboard" class="tela">
   <nav class="navbar">
-    <div class="nav-brand">🏐 Quadra de Vôlei</div>
-    <div class="nav-info">
-      <span id="nome-usuario"></span>
-      <span id="aviso-vencimento" class="badge badge-warning" style="display:none"></span>
-    </div>
-    <div class="nav-actions">
-      <button class="btn btn-sm btn-secondary" onclick="mostrarTela('tela-reservas')">Reservas</button>
-      <button class="btn btn-sm btn-danger" onclick="fazerLogout()">Sair</button>
+    <span class="nav-logo">&#127952; Quadra de Volei</span>
+    <div class="nav-links">
+      <a href="#" onclick="mostrarTela('tela-reservas')">Reservas</a>
+      <button class="btn btn-sm btn-outline" onclick="fazerLogout()">Sair</button>
     </div>
   </nav>
+  <div id="aviso-licenca" class="aviso-licenca" style="display:none;"></div>
   <div class="dashboard-container">
-    <div class="dashboard-grid">
+    <div class="dashboard-header">
+      <h2>Ola, <span id="nome-usuario">Usuario</span>!</h2>
+      <p>O que voce gostaria de fazer hoje?</p>
+    </div>
+    <div class="dashboard-cards">
       <div class="card" onclick="mostrarTela('tela-reservas')">
-        <div class="card-icon">📅</div>
+        <div class="card-icon">&#128197;</div>
         <h3>Minhas Reservas</h3>
         <p>Visualize e gerencie suas reservas</p>
       </div>
       <div class="card" onclick="mostrarTela('tela-nova-reserva')">
-        <div class="card-icon">➕</div>
+        <div class="card-icon">&#10133;</div>
         <h3>Nova Reserva</h3>
-        <p>Agende um horário na quadra</p>
+        <p>Agende um horario na quadra</p>
       </div>
       <div class="card" onclick="mostrarTela('tela-pagamentos')">
-        <div class="card-icon">💳</div>
+        <div class="card-icon">&#128179;</div>
         <h3>Pagamentos</h3>
-        <p>Histórico e status de pagamentos</p>
+        <p>Historico e status de pagamentos</p>
       </div>
     </div>
   </div>
@@ -127,83 +150,80 @@
 <!-- ===== TELA RESERVAS ===== -->
 <div id="tela-reservas" class="tela">
   <nav class="navbar">
-    <div class="nav-brand">📅 Reservas</div>
-    <div class="nav-actions">
-      <button class="btn btn-sm btn-primary" onclick="mostrarTela('tela-nova-reserva')">+ Nova</button>
-      <button class="btn btn-sm btn-secondary" onclick="mostrarTela('tela-dashboard')">Dashboard</button>
-      <button class="btn btn-sm btn-danger" onclick="fazerLogout()">Sair</button>
+    <span class="nav-logo">&#128197; Reservas</span>
+    <div class="nav-links">
+      <a href="#" onclick="mostrarTela('tela-nova-reserva')">+ Nova</a>
+      <a href="#" onclick="mostrarTela('tela-dashboard')">Dashboard</a>
+      <button class="btn btn-sm btn-outline" onclick="fazerLogout()">Sair</button>
     </div>
   </nav>
   <div class="container">
     <h2>Minhas Reservas</h2>
-    <div id="lista-reservas" class="reservas-grid"><p class="loading">Carregando...</p></div>
+    <div id="lista-reservas">Carregando...</div>
   </div>
 </div>
 
 <!-- ===== TELA NOVA RESERVA ===== -->
 <div id="tela-nova-reserva" class="tela">
   <nav class="navbar">
-    <div class="nav-brand">➕ Nova Reserva</div>
-    <div class="nav-actions">
-      <button class="btn btn-sm btn-secondary" onclick="mostrarTela('tela-reservas')">Voltar</button>
-      <button class="btn btn-sm btn-danger" onclick="fazerLogout()">Sair</button>
+    <span class="nav-logo">&#10133; Nova Reserva</span>
+    <div class="nav-links">
+      <a href="#" onclick="mostrarTela('tela-reservas')">Voltar</a>
+      <button class="btn btn-sm btn-outline" onclick="fazerLogout()">Sair</button>
     </div>
   </nav>
   <div class="container">
-    <div class="form-card">
-      <h2>Agendar Reserva</h2>
-      <div id="reserva-msg" class="msg"></div>
-      <div class="form-group">
-        <label>Data</label>
-        <input type="date" id="reserva-data" />
-      </div>
-      <div class="form-group">
-        <label>Horário</label>
-        <select id="reserva-horario">
-          <option value="">Selecione o horário</option>
-          <option value="08:00">08:00 - 09:00</option>
-          <option value="09:00">09:00 - 10:00</option>
-          <option value="10:00">10:00 - 11:00</option>
-          <option value="14:00">14:00 - 15:00</option>
-          <option value="15:00">15:00 - 16:00</option>
-          <option value="16:00">16:00 - 17:00</option>
-          <option value="19:00">19:00 - 20:00</option>
-          <option value="20:00">20:00 - 21:00</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Observações</label>
-        <textarea id="reserva-obs" placeholder="Alguma observação?"></textarea>
-      </div>
-      <button class="btn btn-primary btn-block" onclick="criarReserva()">Confirmar Reserva</button>
+    <h2>Agendar Reserva</h2>
+    <div class="form-group">
+      <label>Data</label>
+      <input type="date" id="reserva-data" />
     </div>
+    <div class="form-group">
+      <label>Horario</label>
+      <select id="reserva-horario">
+        <option value="">Selecione o horario</option>
+        <option value="08:00">08:00 - 09:00</option>
+        <option value="09:00">09:00 - 10:00</option>
+        <option value="10:00">10:00 - 11:00</option>
+        <option value="14:00">14:00 - 15:00</option>
+        <option value="15:00">15:00 - 16:00</option>
+        <option value="16:00">16:00 - 17:00</option>
+        <option value="19:00">19:00 - 20:00</option>
+        <option value="20:00">20:00 - 21:00</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Observacoes</label>
+      <textarea id="reserva-obs" rows="3" placeholder="Opcional"></textarea>
+    </div>
+    <div id="reserva-msg" class="msg"></div>
+    <button class="btn btn-primary btn-block" onclick="confirmarReserva()">Confirmar Reserva</button>
   </div>
 </div>
 
 <!-- ===== TELA PAGAMENTOS ===== -->
 <div id="tela-pagamentos" class="tela">
   <nav class="navbar">
-    <div class="nav-brand">💳 Pagamentos</div>
-    <div class="nav-actions">
-      <button class="btn btn-sm btn-secondary" onclick="mostrarTela('tela-dashboard')">Dashboard</button>
-      <button class="btn btn-sm btn-danger" onclick="fazerLogout()">Sair</button>
+    <span class="nav-logo">&#128179; Pagamentos</span>
+    <div class="nav-links">
+      <a href="#" onclick="mostrarTela('tela-dashboard')">Dashboard</a>
+      <button class="btn btn-sm btn-outline" onclick="fazerLogout()">Sair</button>
     </div>
   </nav>
   <div class="container">
-    <h2>Histórico de Pagamentos</h2>
-    <div id="lista-pagamentos" class="pagamentos-lista"><p class="loading">Carregando...</p></div>
+    <h2>Historico de Pagamentos</h2>
+    <div id="lista-pagamentos">Carregando...</div>
   </div>
 </div>
 
-<!-- ===== FIREBASE ===== -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<!-- ===== SCRIPTS ===== -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="js/firebase.js"></script>
 <script src="js/licenca.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/reservas.js"></script>
 <script src="js/pagamentos.js"></script>
-
 </body>
 </html>
