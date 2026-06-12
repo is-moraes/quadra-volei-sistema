@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Gerenciador de Licenças</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .admin-header { background: #1a1a2e; color: #fff; padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; }
+    .admin-header h1 { font-size: 1.2rem; }
+    .admin-body { max-width: 1100px; margin: 32px auto; padding: 0 20px; }
+    .admin-login { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #1a1a2e; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border-radius: 10px; padding: 20px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+    .stat-card .label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.8px; color: #888; margin-bottom: 6px; }
+    .stat-card .number { font-size: 2rem; font-weight: 700; }
+    .stat-card.ativo .number { color: #43a047; }
+    .stat-card.expirado .number { color: #e53935; }
+    .stat-card.bloqueado .number { color: #fb8c00; }
+    .stat-card.total .number { color: #1a73e8; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-header h2 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+    .badge-ativo { background: #e8f5e9; color: #2e7d32; }
+    .badge-expirado { background: #ffebee; color: #c62828; }
+    .badge-bloqueado { background: #fff3e0; color: #e65100; }
+    .dias-restantes { font-size: 0.82rem; color: #888; }
+    .dias-critico { color: #e53935; font-weight: 700; }
+    .dias-ok { color: #43a047; font-weight: 600; }
+    .action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-sm { padding: 5px 10px; font-size: 0.78rem; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
+    .btn-ativar { background: #e8f5e9; color: #2e7d32; }
+    .btn-bloquear { background: #fff3e0; color: #e65100; }
+    .btn-renovar { background: #e3f2fd; color: #1565c0; }
+    .btn-excluir { background: #ffebee; color: #c62828; }
+    .modal-form .form-group { margin-bottom: 14px; }
+    .modal-form label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #444; }
+    .modal-form input, .modal-form select { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 0.9rem; outline: none; }
+    .modal-form input:focus { border-color: #1a73e8; }
+    .topo-aviso { background: #fff3e0; border-left: 4px solid #fb8c00; padding: 10px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 0.88rem; color: #7a4a00; }
+    #painel-admin { display: none; }
+    #tela-admin-login { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #1a1a2e, #1a73e8); }
+  </style>
+</head>
+<body style="background:#f0f4f8; margin:0;">
+
+<!-- LOGIN ADMIN -->
+<div id="tela-admin-login">
+  <div class="auth-box" style="max-width:380px; width:90%;">
+    <h1 style="text-align:center; color:#1a73e8; margin-bottom:6px;">&#x1F512; Admin</h1>
+    <p style="text-align:center; color:#888; margin-bottom:24px; font-size:0.9rem;">Portal de Gerenciamento de Licenças</p>
+    <div id="admin-login-erro" class="msg error"></div>
+    <div class="form-group">
+      <label>E-mail Admin</label>
+      <input type="email" id="admin-email" placeholder="admin@seudominio.com" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="admin-senha" placeholder="Senha do administrador" />
+    </div>
+    <button class="btn btn-primary" onclick="loginAdmin()">Entrar como Admin</button>
+  </div>
+</div>
+
+<!-- PAINEL ADMIN -->
+<div id="painel-admin">
+  <div class="admin-header">
+    <h1>&#x1F512; Gerenciador de Licenças &mdash; Quadra de Vôlei</h1>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span id="admin-nome" style="font-size:0.9rem; opacity:0.85;"></span>
+      <button class="btn-sm btn-bloquear" onclick="logoutAdmin()">Sair</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card total"><div class="label">Total de Clientes</div><div class="number" id="stat-total">0</div></div>
+      <div class="stat-card ativo"><div class="label">Ativos</div><div class="number" id="stat-ativos">0</div></div>
+      <div class="stat-card expirado"><div class="label">Expirados</div><div class="number" id="stat-expirados">0</div></div>
+      <div class="stat-card bloqueado"><div class="label">Bloqueados</div><div class="number" id="stat-bloqueados">0</div></div>
+    </div>
+
+    <!-- Aviso de vencimento próximo -->
+    <div id="aviso-vencimento" class="topo-aviso" style="display:none;"></div>
+
+    <!-- Tabela de clientes -->
+    <div class="table-wrapper">
+      <div class="table-header">
+        <h2>&#x1F4CB; Clientes / Quadras</h2>
+        <button class="btn btn-primary" style="padding:8px 18px; font-size:0.88rem;" onclick="abrirModalNovoCliente()">+ Novo Cliente</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome / Quadra</th>
+            <th>E-mail</th>
+            <th>Plano</th>
+            <th>Status</th>
+            <th>Expira em</th>
+            <th>Dias Restantes</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-clientes">
+          <tr><td colspan="7" style="text-align:center; color:#888; padding:24px;">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO CLIENTE -->
+<div class="modal-overlay" id="modal-novo-cliente">
+  <div class="modal modal-form">
+    <h2>&#x2795; Novo Cliente</h2>
+    <div id="msg-novo-cliente" class="msg"></div>
+    <div class="form-group">
+      <label>Nome da Quadra / Cliente</label>
+      <input type="text" id="nc-nome" placeholder="Quadra do João" />
+    </div>
+    <div class="form-group">
+      <label>E-mail de acesso</label>
+      <input type="email" id="nc-email" placeholder="joao@quadra.com" />
+    </div>
+    <div class="form-group">
+      <label>Senha inicial</label>
+      <input type="password" id="nc-senha" placeholder="Mínimo 6 caracteres" />
+    </div>
+    <div class="form-group">
+      <label>Plano</label>
+      <select id="nc-plano">
+        <option value="trial">Trial (30 dias)</option>
+        <option value="mensal">Mensal (30 dias)</option>
+        <option value="trimestral">Trimestral (90 dias)</option>
+        <option value="anual">Anual (365 dias)</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="fecharModal('modal-novo-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="criarNovoCliente()">Criar Cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RENOVAR -->
+<div class="modal-overlay" id="modal-renovar">
+  <div class="modal modal-form">
+    <h2>&#x1F504; Renovar Licença</h2>
+    <div id="msg-renovar" class="msg"></div>
+    <p id="renovar-info" style="margin-bottom:16px; color:#555; font-size:0.9rem;"></p>
+    <div class="form-group">
+      <label>Novo Plano</label>
+      <select id="renovar-plano">
+        <option value="30">Mensal (30 dias)</option>
+        <option value="90">Trimestral (90 dias)</option>
+        <option value="365">Anual (365 dias)</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="fecharModal('modal-renovar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarRenovacao()">Renovar Agora</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/firebase.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
