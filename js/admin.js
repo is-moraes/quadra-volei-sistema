@@ -254,3 +254,6 @@ document.addEventListener('keydown', (e) => {
     loginAdmin();
   }
 });
+
+// Click no botao de login
+document.getElementById('loginAdmin').addEventListener('click', loginAdmin);
