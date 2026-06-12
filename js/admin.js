@@ -256,4 +256,5 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Click no botao de login
-document.getElementById('loginAdmin').addEventListener('click', loginAdmin);
+document.getElementById('loginAdmin').addEventListener('click', (e) => { e.preventDefault(); loginAdmin(); });
+document.getElementById('tela-admin-login').addEventListener('submit', (e) => { e.preventDefault(); loginAdmin(); });
