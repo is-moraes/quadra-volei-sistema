@@ -21,7 +21,7 @@ async function loginAdmin() {
     const doc = await firebase.firestore().collection('admins').doc(cred.user.uid).get();
     if (!doc.exists || !doc.data().isAdmin) {
       await firebase.auth().signOut();
-      mostrarMsg(erroEl, 'Acesso negado. Voc\u00ea n\u00e3o e\u2019 administrador.', 'error');
+      mostrarMsg(erroEl, 'Acesso negado. Voce nao e administrador.', 'error');
       return;
     }
     document.getElementById('admin-nome').textContent = cred.user.email;
@@ -29,7 +29,7 @@ async function loginAdmin() {
     document.getElementById('painel-admin').style.display = 'block';
     carregarClientes();
   } catch (e) {
-    mostrarMsg(erroEl, 'E-mail ou senha inv\u00e1lidos.', 'error');
+    mostrarMsg(erroEl, 'E-mail ou senha invalidos.', 'error');
   }
 }
 
@@ -41,7 +41,7 @@ async function logoutAdmin() {
 // ===== CARREGAR CLIENTES =====
 async function carregarClientes() {
   const tbody = document.getElementById('tabela-clientes');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888; padding:24px;">Carregando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>';
 
   try {
     const snap = await firebase.firestore().collection('clientes').orderBy('nome').get();
@@ -65,10 +65,11 @@ async function carregarClientes() {
       const dias = Math.ceil((exp - hoje) / (1000 * 60 * 60 * 24));
       return dias >= 0 && dias <= 5;
     });
+
     const avisoEl = document.getElementById('aviso-vencimento');
     if (vencendoEm5.length > 0) {
       avisoEl.style.display = 'block';
-      avisoEl.innerHTML = '\u26a0\ufe0f <strong>' + vencendoEm5.length + ' cliente(s)</strong> vencem nos pr\u00f3ximos 5 dias: ' +
+      avisoEl.innerHTML = '&#9888;&#65039; <strong>' + vencendoEm5.length + ' cliente(s)</strong> vencem nos proximos 5 dias: ' +
         vencendoEm5.map(c => '<strong>' + c.nome + '</strong>').join(', ');
     } else {
       avisoEl.style.display = 'none';
@@ -76,22 +77,24 @@ async function carregarClientes() {
 
     // Renderiza tabela
     if (clientes.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888; padding:24px;">Nenhum cliente cadastrado.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7">Nenhum cliente cadastrado.</td></tr>';
       return;
     }
 
     tbody.innerHTML = clientes.map(c => {
-      const exp = c.dataExpiracao ? (c.dataExpiracao.toDate ? c.dataExpiracao.toDate() : new Date(c.dataExpiracao)) : null;
+      const exp = c.dataExpiracao
+        ? (c.dataExpiracao.toDate ? c.dataExpiracao.toDate() : new Date(c.dataExpiracao))
+        : null;
       const diasRestantes = exp ? Math.ceil((exp - hoje) / (1000 * 60 * 60 * 24)) : null;
       const diasStr = diasRestantes !== null
-        ? (diasRestantes <= 0 ? '<span class="dias-critico">Expirado</span>'
-          : diasRestantes <= 5 ? '<span class="dias-critico">' + diasRestantes + ' dias</span>'
-          : '<span class="dias-ok">' + diasRestantes + ' dias</span>')
+        ? (diasRestantes <= 0
+            ? '<span class="dias-critico">Expirado</span>'
+            : diasRestantes <= 5
+              ? '<span class="dias-critico">' + diasRestantes + ' dias</span>'
+              : '<span class="dias-ok">' + diasRestantes + ' dias</span>')
         : '-';
-
       const badgeClass = c.status === 'ativo' ? 'badge-ativo' : c.status === 'bloqueado' ? 'badge-bloqueado' : 'badge-expirado';
-      const statusLabel = c.status === 'ativo' ? '\u2705 Ativo' : c.status === 'bloqueado' ? '\u26d4 Bloqueado' : '\u23f0 Expirado';
-
+      const statusLabel = c.status === 'ativo' ? '&#9989; Ativo' : c.status === 'bloqueado' ? '&#9940; Bloqueado' : '&#9200; Expirado';
       const planoLabels = { trial: 'Trial', mensal: 'Mensal', trimestral: 'Trimestral', anual: 'Anual' };
 
       return `<tr>
@@ -100,20 +103,18 @@ async function carregarClientes() {
         <td>${planoLabels[c.plano] || c.plano}</td>
         <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
         <td>${exp ? exp.toLocaleDateString('pt-BR') : '-'}</td>
-        <td>${diasStr}</td>
-        <td>
-          <div class="action-btns">
-            ${c.status !== 'ativo' ? `<button class="btn-sm btn-ativar" onclick="alterarStatus('${c.id}', 'ativo')">\u2705 Ativar</button>` : ''}
-            ${c.status !== 'bloqueado' ? `<button class="btn-sm btn-bloquear" onclick="alterarStatus('${c.id}', 'bloqueado')">\u26d4 Bloquear</button>` : ''}
-            <button class="btn-sm btn-renovar" onclick="abrirModalRenovar('${c.id}', '${c.nome}')">\u1f504 Renovar</button>
-            <button class="btn-sm btn-excluir" onclick="excluirCliente('${c.id}', '${c.nome}')">\ud83d\uddd1 Excluir</button>
-          </div>
+        <td class="dias-restantes">${diasStr}</td>
+        <td class="action-btns">
+          ${c.status !== 'ativo' ? `<button class="btn-sm btn-ativar" onclick="alterarStatus('${c.id}','ativo')">&#9989; Ativar</button>` : ''}
+          ${c.status !== 'bloqueado' ? `<button class="btn-sm btn-bloquear" onclick="alterarStatus('${c.id}','bloqueado')">&#9940; Bloquear</button>` : ''}
+          <button class="btn-sm btn-renovar" onclick="abrirModalRenovar('${c.id}','${c.nome}')">&#128260; Renovar</button>
+          <button class="btn-sm btn-excluir" onclick="excluirCliente('${c.id}','${c.nome}')">&#128465; Excluir</button>
         </td>
       </tr>`;
     }).join('');
 
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#e53935; padding:24px;">Erro ao carregar: ' + e.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7">Erro ao carregar: ' + e.message + '</td></tr>';
   }
 }
 
@@ -154,7 +155,7 @@ async function confirmarRenovacao() {
   }
 }
 
-// ===== NOVO CLIENTE =====
+// ===== NOVO CLIENTE (usa app secundario para nao deslogar o admin) =====
 function abrirModalNovoCliente() {
   document.getElementById('modal-novo-cliente').classList.add('open');
 }
@@ -175,16 +176,22 @@ async function criarNovoCliente() {
   const dias = diasPlano[plano] || 30;
 
   try {
-    // Cria usuario no Firebase Auth
-    const adminAuth = firebase.auth();
-    const cred = await adminAuth.createUserWithEmailAndPassword(email, senha);
+    // Usa app secundario para criar usuario sem deslogar o admin
+    const secondaryApp = firebase.apps.find(a => a.name === 'Secondary') ||
+      firebase.initializeApp(firebase.app().options, 'Secondary');
+    const secondaryAuth = secondaryApp.auth();
+
+    const cred = await secondaryAuth.createUserWithEmailAndPassword(email, senha);
     const uid = cred.user.uid;
+
+    // Desloga do app secundario imediatamente
+    await secondaryAuth.signOut();
 
     // Calcula expiracao
     const dataExpiracao = new Date();
     dataExpiracao.setDate(dataExpiracao.getDate() + dias);
 
-    // Salva no Firestore
+    // Salva no Firestore usando app principal (admin ainda logado)
     await firebase.firestore().collection('clientes').doc(uid).set({
       nome,
       email,
@@ -195,11 +202,18 @@ async function criarNovoCliente() {
       uid
     });
 
-    // Volta para admin
-    await adminAuth.signOut();
-    // Re-login admin (necessario apos criar usuario)
-    mostrarMsg(msgEl, 'Cliente criado! Fa\u00e7a login novamente como admin.', 'success');
-    setTimeout(() => { fecharModal('modal-novo-cliente'); location.reload(); }, 2000);
+    // Limpa formulario
+    document.getElementById('nc-nome').value = '';
+    document.getElementById('nc-email').value = '';
+    document.getElementById('nc-senha').value = '';
+    document.getElementById('nc-plano').value = 'trial';
+
+    mostrarMsg(msgEl, 'Cliente criado com sucesso!', 'success');
+    setTimeout(() => {
+      fecharModal('modal-novo-cliente');
+      carregarClientes();
+    }, 1500);
+
   } catch (e) {
     mostrarMsg(msgEl, 'Erro: ' + e.message, 'error');
   }
@@ -207,7 +221,7 @@ async function criarNovoCliente() {
 
 // ===== EXCLUIR CLIENTE =====
 async function excluirCliente(id, nome) {
-  if (!confirm('Tem certeza que deseja excluir o cliente "' + nome + '"?\nEssa a\u00e7\u00e3o n\u00e3o pode ser desfeita.')) return;
+  if (!confirm('Tem certeza que deseja excluir o cliente "' + nome + '"?\nEssa acao nao pode ser desfeita.')) return;
   try {
     await firebase.firestore().collection('clientes').doc(id).delete();
     carregarClientes();
