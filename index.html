@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Reservas - Quadra de Vôlei</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===== TELA DE LOGIN ===== -->
+  <div id="tela-login" class="tela ativa">
+    <div class="card">
+      <h1>🏐 Quadra de Vôlei</h1>
+      <h2>Entrar</h2>
+      <input type="email" id="login-email" placeholder="E-mail" />
+      <input type="password" id="login-senha" placeholder="Senha" />
+      <button onclick="loginUsuario()">Entrar</button>
+      <p>Não tem conta? <a href="#" onclick="mostrarTela('tela-cadastro')">Cadastre-se</a></p>
+      <p id="login-erro" class="erro"></p>
+    </div>
+  </div>
+
+  <!-- ===== TELA DE CADASTRO ===== -->
+  <div id="tela-cadastro" class="tela">
+    <div class="card">
+      <h1>🏐 Quadra de Vôlei</h1>
+      <h2>Criar Conta</h2>
+      <input type="text" id="cad-nome" placeholder="Nome completo" />
+      <input type="tel" id="cad-telefone" placeholder="Telefone" />
+      <input type="email" id="cad-email" placeholder="E-mail" />
+      <input type="password" id="cad-senha" placeholder="Senha" />
+      <button onclick="cadastrarUsuario()">Criar Conta</button>
+      <p>Já tem conta? <a href="#" onclick="mostrarTela('tela-login')">Entrar</a></p>
+      <p id="cad-erro" class="erro"></p>
+    </div>
+  </div>
+
+  <!-- ===== TELA PRINCIPAL (DASHBOARD) ===== -->
+  <div id="tela-dashboard" class="tela">
+    <header>
+      <h1>🏐 Quadra de Vôlei</h1>
+      <div>
+        <span id="usuario-nome"></span>
+        <button onclick="logoutUsuario()" class="btn-logout">Sair</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- NOVA RESERVA -->
+      <section class="card">
+        <h2>📅 Nova Reserva</h2>
+        <label>Data:</label>
+        <input type="date" id="reserva-data" />
+        <label>Horário de início:</label>
+        <input type="time" id="reserva-inicio" />
+        <label>Horário de fim:</label>
+        <input type="time" id="reserva-fim" />
+        <button onclick="criarReserva()">Reservar</button>
+        <p id="reserva-msg" class="msg"></p>
+      </section>
+
+      <!-- MINHAS RESERVAS -->
+      <section class="card">
+        <h2>📋 Minhas Reservas</h2>
+        <div id="lista-reservas">Carregando...</div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Scripts (módulos ES6) -->
+  <script type="module" src="js/firebase.js"></script>
+  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/reservas.js"></script>
+  <script type="module" src="js/pagamentos.js"></script>
+
+</body>
+</html>
