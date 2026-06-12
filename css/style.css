@@ -454,3 +454,54 @@ tbody td {
     padding: 28px 20px;
   }
 }
+
+
+/* ===== TELA SYSTEM ===== */
+.tela { display: none; }
+.tela.ativa { display: block; }
+
+/* ===== AUTH EXTRAS ===== */
+.auth-title { text-align: center; margin-bottom: 8px; color: #1a73e8; font-size: 1.8rem; }
+.auth-subtitle { text-align: center; color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+.auth-links { text-align: center; margin-top: 16px; font-size: 0.9rem; }
+.auth-links a { color: #1a73e8; text-decoration: none; font-weight: 600; margin: 0 8px; }
+
+/* ===== BUTTON EXTRAS ===== */
+.btn-block { display: block; width: 100%; }
+.btn-sm { padding: 6px 14px; font-size: 0.85rem; }
+.btn-outline { background: transparent; color: #1a73e8; border: 2px solid #1a73e8; }
+.btn-outline:hover { background: #e8f0fe; }
+
+/* ===== MSG INFO ===== */
+.msg.info { background: #e3f2fd; color: #1565c0; border-left: 4px solid #1a73e8; }
+
+/* ===== BLOQUEIO / EXPIRADO ===== */
+.bloqueio-box { text-align: center; }
+.bloqueio-icon { font-size: 3.5rem; margin-bottom: 16px; }
+.bloqueio-box h2 { font-size: 1.5rem; color: #c62828; margin-bottom: 12px; }
+.bloqueio-msg { color: #555; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5; }
+.bloqueio-actions { display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+
+/* ===== AVISO LICENCA ===== */
+.aviso-licenca { background: #fff3e0; color: #e65100; border-left: 4px solid #ff9800; padding: 12px 20px; font-weight: 600; font-size: 0.9rem; }
+
+/* ===== NAVBAR EXTRAS ===== */
+.nav-logo { font-size: 1.1rem; font-weight: 700; color: #fff; }
+.nav-links { display: flex; align-items: center; gap: 14px; }
+.nav-links a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+.nav-links a:hover { color: #fff; }
+
+/* ===== DASHBOARD ===== */
+.dashboard-container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+.dashboard-header { margin-bottom: 28px; }
+.dashboard-header h2 { font-size: 1.6rem; color: #1a1a2e; }
+.dashboard-header p { color: #666; margin-top: 4px; }
+.dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+.dashboard-cards .card { background: #fff; border-radius: 12px; padding: 28px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; text-align: center; }
+.dashboard-cards .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+.card-icon { font-size: 2.2rem; margin-bottom: 12px; }
+.dashboard-cards .card h3 { font-size: 1rem; color: #1a73e8; margin-bottom: 6px; }
+.dashboard-cards .card p { font-size: 0.85rem; color: #777; }
+
+/* ===== CONTAINER ===== */
+.container { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
