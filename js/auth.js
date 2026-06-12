@@ -33,31 +33,27 @@ async function loginUsuario() {
     const cred = await firebase.auth().signInWithEmailAndPassword(email, senha);
     const uid = cred.user.uid;
 
-    // Verifica licenca antes de dar acesso
     const licenca = await verificarLicenca(uid);
-
     if (!licenca.valida) {
       await firebase.auth().signOut();
       mostrarTelaBloqueio(licenca);
       return;
     }
 
-    // Acesso liberado
     const userDoc = await firebase.firestore().collection('usuarios').doc(uid).get();
     const nomeUsuario = userDoc.exists ? userDoc.data().nome : email;
     const nomeEl = document.getElementById('nome-usuario');
     if (nomeEl) nomeEl.textContent = nomeUsuario;
-
     mostrarTela('tela-dashboard');
     exibirAvisoVencimento(licenca);
     if (typeof carregarReservas === 'function') carregarReservas();
-
   } catch (e) {
     const msgs = {
-      'auth/user-not-found': 'Usuário não encontrado.',
+      'auth/user-not-found': 'Usuario nao encontrado.',
       'auth/wrong-password': 'Senha incorreta.',
-      'auth/invalid-email': 'E-mail inválido.',
-      'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.'
+      'auth/invalid-email': 'E-mail invalido.',
+      'auth/too-many-requests': 'Muitas tentativas. Tente mais tarde.',
+      'auth/invalid-credential': 'E-mail ou senha incorretos.'
     };
     showMsg(erroEl, msgs[e.code] || 'Erro ao entrar: ' + e.message);
   } finally {
@@ -69,17 +65,17 @@ async function loginUsuario() {
 // ===== CADASTRO =====
 async function cadastrarUsuario() {
   const nome = document.getElementById('cad-nome').value.trim();
-  const telefone = document.getElementById('cad-telefone').value.trim();
+  const telefone = document.getElementById('cad-telefone') ? document.getElementById('cad-telefone').value.trim() : '';
   const email = document.getElementById('cad-email').value.trim();
   const senha = document.getElementById('cad-senha').value;
   const erroEl = document.getElementById('cad-erro');
 
   if (!nome || !email || !senha) {
-    showMsg(erroEl, 'Preencha todos os campos obrigatórios.');
+    showMsg(erroEl, 'Preencha todos os campos obrigatorios.');
     return;
   }
   if (senha.length < 6) {
-    showMsg(erroEl, 'A senha deve ter no mínimo 6 caracteres.');
+    showMsg(erroEl, 'A senha deve ter no minimo 6 caracteres.');
     return;
   }
 
@@ -90,15 +86,12 @@ async function cadastrarUsuario() {
   try {
     const cred = await firebase.auth().createUserWithEmailAndPassword(email, senha);
     const uid = cred.user.uid;
-
     await firebase.firestore().collection('usuarios').doc(uid).set({
       nome, telefone, email, uid,
       criadoEm: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // Verifica licenca do novo usuario
     const licenca = await verificarLicenca(uid);
-
     if (!licenca.valida) {
       await firebase.auth().signOut();
       mostrarTelaBloqueio(licenca);
@@ -109,11 +102,10 @@ async function cadastrarUsuario() {
     if (nomeEl) nomeEl.textContent = nome;
     mostrarTela('tela-dashboard');
     if (typeof carregarReservas === 'function') carregarReservas();
-
   } catch (e) {
     const msgs = {
-      'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
-      'auth/invalid-email': 'E-mail inválido.',
+      'auth/email-already-in-use': 'Este e-mail ja esta cadastrado.',
+      'auth/invalid-email': 'E-mail invalido.',
       'auth/weak-password': 'Senha muito fraca.'
     };
     showMsg(erroEl, msgs[e.code] || 'Erro ao cadastrar: ' + e.message);
@@ -127,8 +119,10 @@ async function cadastrarUsuario() {
 async function sairUsuario() {
   await firebase.auth().signOut();
   mostrarTela('tela-login');
-  document.getElementById('login-email').value = '';
-  document.getElementById('login-senha').value = '';
+  const emailEl = document.getElementById('login-email');
+  const senhaEl = document.getElementById('login-senha');
+  if (emailEl) emailEl.value = '';
+  if (senhaEl) senhaEl.value = '';
 }
 
 // ===== VERIFICACAO AUTOMATICA DE SESSAO =====
@@ -151,3 +145,25 @@ firebase.auth().onAuthStateChanged(async (user) => {
     mostrarTela('tela-login');
   }
 });
+
+// ===== ALIASES - nomes usados no HTML =====
+function fazerLogin() { loginUsuario(); }
+function fazerCadastro() { cadastrarUsuario(); }
+function fazerLogout() { sairUsuario(); }
+
+async function recuperarSenha() {
+  const email = document.getElementById('recuperar-email').value.trim();
+  const msgEl = document.getElementById('recuperar-msg');
+  if (!email) { showMsg(msgEl, 'Informe o email.', 'error'); return; }
+  try {
+    await firebase.auth().sendPasswordResetEmail(email);
+    showMsg(msgEl, 'Email de recuperacao enviado! Verifique sua caixa de entrada.', 'success');
+  } catch (e) {
+    showMsg(msgEl, 'Erro ao enviar: ' + e.message, 'error');
+  }
+}
+
+function solicitarRenovacao() {
+  const el = document.getElementById('bloqueio-info') || document.getElementById('expirado-info');
+  showMsg(el, 'Contate o administrador para renovar sua licenca.', 'info');
+}
