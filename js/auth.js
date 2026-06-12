@@ -1,180 +1,153 @@
-import { auth, db } from './firebase.js';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import {
-  doc, setDoc, getDoc, serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+// ===== AUTH.JS - Autenticacao Firebase com verificacao de licenca =====
 
-// ── Utilitários de UI ──────────────────────────────────────────────
+// Utilitario de mensagens
 function showMsg(el, text, type = 'error') {
   if (!el) return;
   el.textContent = text;
-  el.className = `msg ${type} show`;
+  el.className = 'msg ' + type + ' show';
+  setTimeout(() => el.classList.remove('show'), 5000);
 }
 
-function hideMsg(el) {
-  if (!el) return;
-  el.className = 'msg';
+// Mostrar tela
+function mostrarTela(id) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.getElementById(id).classList.add('ativa');
 }
 
-function setLoading(btn, loading) {
-  if (!btn) return;
-  if (loading) {
-    btn.disabled = true;
-    btn.dataset.original = btn.textContent;
-    btn.innerHTML = '<span class="spinner"></span>Aguarde...';
-  } else {
+// ===== LOGIN =====
+async function loginUsuario() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const erroEl = document.getElementById('login-erro');
+
+  if (!email || !senha) {
+    showMsg(erroEl, 'Preencha e-mail e senha.');
+    return;
+  }
+
+  const btn = document.querySelector('#tela-login .btn-primary');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Entrando...';
+
+  try {
+    const cred = await firebase.auth().signInWithEmailAndPassword(email, senha);
+    const uid = cred.user.uid;
+
+    // Verifica licenca antes de dar acesso
+    const licenca = await verificarLicenca(uid);
+
+    if (!licenca.valida) {
+      await firebase.auth().signOut();
+      mostrarTelaBloqueio(licenca);
+      return;
+    }
+
+    // Acesso liberado
+    const userDoc = await firebase.firestore().collection('usuarios').doc(uid).get();
+    const nomeUsuario = userDoc.exists ? userDoc.data().nome : email;
+    const nomeEl = document.getElementById('nome-usuario');
+    if (nomeEl) nomeEl.textContent = nomeUsuario;
+
+    mostrarTela('tela-dashboard');
+    exibirAvisoVencimento(licenca);
+    if (typeof carregarReservas === 'function') carregarReservas();
+
+  } catch (e) {
+    const msgs = {
+      'auth/user-not-found': 'Usuário não encontrado.',
+      'auth/wrong-password': 'Senha incorreta.',
+      'auth/invalid-email': 'E-mail inválido.',
+      'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.'
+    };
+    showMsg(erroEl, msgs[e.code] || 'Erro ao entrar: ' + e.message);
+  } finally {
     btn.disabled = false;
-    btn.textContent = btn.dataset.original || 'Enviar';
+    btn.innerHTML = 'Entrar';
   }
 }
 
-// ── Guarda de Rota ────────────────────────────────────────────────
-export function requireAuth(redirectTo = '/index.html') {
-  return new Promise((resolve) => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      unsub();
-      if (!user) {
-        window.location.href = redirectTo;
-      } else {
-        resolve(user);
-      }
+// ===== CADASTRO =====
+async function cadastrarUsuario() {
+  const nome = document.getElementById('cad-nome').value.trim();
+  const telefone = document.getElementById('cad-telefone').value.trim();
+  const email = document.getElementById('cad-email').value.trim();
+  const senha = document.getElementById('cad-senha').value;
+  const erroEl = document.getElementById('cad-erro');
+
+  if (!nome || !email || !senha) {
+    showMsg(erroEl, 'Preencha todos os campos obrigatórios.');
+    return;
+  }
+  if (senha.length < 6) {
+    showMsg(erroEl, 'A senha deve ter no mínimo 6 caracteres.');
+    return;
+  }
+
+  const btn = document.querySelector('#tela-cadastro .btn-primary');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Criando conta...';
+
+  try {
+    const cred = await firebase.auth().createUserWithEmailAndPassword(email, senha);
+    const uid = cred.user.uid;
+
+    await firebase.firestore().collection('usuarios').doc(uid).set({
+      nome, telefone, email, uid,
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
     });
-  });
-}
 
-export function redirectIfLogged(redirectTo = '/dashboard.html') {
-  return new Promise((resolve) => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      unsub();
-      if (user) {
-        window.location.href = redirectTo;
-      } else {
-        resolve(null);
-      }
-    });
-  });
-}
+    // Verifica licenca do novo usuario
+    const licenca = await verificarLicenca(uid);
 
-// ── Cadastro ──────────────────────────────────────────────────────
-export async function cadastrar(nome, email, senha, perfil = 'cliente') {
-  const cred = await createUserWithEmailAndPassword(auth, email, senha);
-  const uid = cred.user.uid;
-  await setDoc(doc(db, 'usuarios', uid), {
-    uid,
-    nome,
-    email,
-    perfil,
-    ativo: true,
-    criadoEm: serverTimestamp()
-  });
-  return cred.user;
-}
-
-// ── Login ─────────────────────────────────────────────────────────
-export async function login(email, senha) {
-  const cred = await signInWithEmailAndPassword(auth, email, senha);
-  return cred.user;
-}
-
-// ── Logout ────────────────────────────────────────────────────────
-export async function logout() {
-  await signOut(auth);
-  window.location.href = '/index.html';
-}
-
-// ── Busca perfil do usuário no Firestore ──────────────────────────
-export async function getPerfil(uid) {
-  const snap = await getDoc(doc(db, 'usuarios', uid));
-  return snap.exists() ? snap.data() : null;
-}
-
-// ── Observador global (para popular navbar, etc.) ─────────────────
-export function observarAuth(callback) {
-  return onAuthStateChanged(auth, callback);
-}
-
-// ── Formulário de Login (index.html) ─────────────────────────────
-const formLogin = document.getElementById('form-login');
-if (formLogin) {
-  redirectIfLogged('/dashboard.html');
-
-  formLogin.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById('msg-login');
-    const btn = formLogin.querySelector('button[type=submit]');
-    const email = formLogin.email.value.trim();
-    const senha = formLogin.senha.value;
-
-    hideMsg(msg);
-    setLoading(btn, true);
-
-    try {
-      await login(email, senha);
-      window.location.href = '/dashboard.html';
-    } catch (err) {
-      const erros = {
-        'auth/invalid-credential': 'E-mail ou senha incorretos.',
-        'auth/user-not-found': 'Usuário não encontrado.',
-        'auth/wrong-password': 'Senha incorreta.',
-        'auth/too-many-requests': 'Muitas tentativas. Tente mais tarde.'
-      };
-      showMsg(msg, erros[err.code] || 'Erro ao fazer login. Tente novamente.');
-    } finally {
-      setLoading(btn, false);
-    }
-  });
-}
-
-// ── Formulário de Cadastro (cadastro.html) ────────────────────────
-const formCadastro = document.getElementById('form-cadastro');
-if (formCadastro) {
-  redirectIfLogged('/dashboard.html');
-
-  formCadastro.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById('msg-cadastro');
-    const btn = formCadastro.querySelector('button[type=submit]');
-    const nome  = formCadastro.nome.value.trim();
-    const email = formCadastro.email.value.trim();
-    const senha = formCadastro.senha.value;
-    const confirma = formCadastro.confirma.value;
-
-    hideMsg(msg);
-
-    if (senha !== confirma) {
-      showMsg(msg, 'As senhas não coincidem.');
-      return;
-    }
-    if (senha.length < 6) {
-      showMsg(msg, 'A senha deve ter pelo menos 6 caracteres.');
+    if (!licenca.valida) {
+      await firebase.auth().signOut();
+      mostrarTelaBloqueio(licenca);
       return;
     }
 
-    setLoading(btn, true);
-    try {
-      await cadastrar(nome, email, senha);
-      showMsg(msg, 'Cadastro realizado! Redirecionando...', 'success');
-      setTimeout(() => (window.location.href = '/dashboard.html'), 1500);
-    } catch (err) {
-      const erros = {
-        'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
-        'auth/invalid-email': 'E-mail inválido.',
-        'auth/weak-password': 'Senha muito fraca.'
-      };
-      showMsg(msg, erros[err.code] || 'Erro ao cadastrar. Tente novamente.');
-    } finally {
-      setLoading(btn, false);
-    }
-  });
+    const nomeEl = document.getElementById('nome-usuario');
+    if (nomeEl) nomeEl.textContent = nome;
+    mostrarTela('tela-dashboard');
+    if (typeof carregarReservas === 'function') carregarReservas();
+
+  } catch (e) {
+    const msgs = {
+      'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
+      'auth/invalid-email': 'E-mail inválido.',
+      'auth/weak-password': 'Senha muito fraca.'
+    };
+    showMsg(erroEl, msgs[e.code] || 'Erro ao cadastrar: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Criar Conta';
+  }
 }
 
-// ── Botão Logout (dashboard e demais páginas) ─────────────────────
-const btnLogout = document.getElementById('btn-logout');
-if (btnLogout) {
-  btnLogout.addEventListener('click', logout);
+// ===== LOGOUT =====
+async function sairUsuario() {
+  await firebase.auth().signOut();
+  mostrarTela('tela-login');
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-senha').value = '';
 }
+
+// ===== VERIFICACAO AUTOMATICA DE SESSAO =====
+firebase.auth().onAuthStateChanged(async (user) => {
+  if (user) {
+    const licenca = await verificarLicenca(user.uid);
+    if (!licenca.valida) {
+      await firebase.auth().signOut();
+      mostrarTelaBloqueio(licenca);
+      return;
+    }
+    const userDoc = await firebase.firestore().collection('usuarios').doc(user.uid).get();
+    const nomeUsuario = userDoc.exists ? userDoc.data().nome : user.email;
+    const nomeEl = document.getElementById('nome-usuario');
+    if (nomeEl) nomeEl.textContent = nomeUsuario;
+    mostrarTela('tela-dashboard');
+    exibirAvisoVencimento(licenca);
+    if (typeof carregarReservas === 'function') carregarReservas();
+  } else {
+    mostrarTela('tela-login');
+  }
+});
