@@ -1,6 +1,6 @@
 // ===== ADMIN.JS - Portal de Gerenciamento de Licencas =====
 // E-mail do super admin (altere para o seu)
-const ADMIN_EMAIL = 'admin@quadravolei.com';
+const ADMIN_EMAIL = 'zeisrael@gmail.com';
 
 let clienteSelecionadoId = null;
 
