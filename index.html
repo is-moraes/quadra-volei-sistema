@@ -8,71 +8,164 @@
 </head>
 <body>
 
-  <!-- ===== TELA DE LOGIN ===== -->
-  <div id="tela-login" class="tela ativa">
-    <div class="card">
+<!-- ===== TELA DE LOGIN ===== -->
+<div id="tela-login" class="tela ativa">
+  <div class="auth-container">
+    <div class="auth-box">
       <h1>🏐 Quadra de Vôlei</h1>
-      <h2>Entrar</h2>
-      <input type="email" id="login-email" placeholder="E-mail" />
-      <input type="password" id="login-senha" placeholder="Senha" />
-      <button onclick="loginUsuario()">Entrar</button>
-      <p>Não tem conta? <a href="#" onclick="mostrarTela('tela-cadastro')">Cadastre-se</a></p>
-      <p id="login-erro" class="erro"></p>
-    </div>
-  </div>
-
-  <!-- ===== TELA DE CADASTRO ===== -->
-  <div id="tela-cadastro" class="tela">
-    <div class="card">
-      <h1>🏐 Quadra de Vôlei</h1>
-      <h2>Criar Conta</h2>
-      <input type="text" id="cad-nome" placeholder="Nome completo" />
-      <input type="tel" id="cad-telefone" placeholder="Telefone" />
-      <input type="email" id="cad-email" placeholder="E-mail" />
-      <input type="password" id="cad-senha" placeholder="Senha" />
-      <button onclick="cadastrarUsuario()">Criar Conta</button>
-      <p>Já tem conta? <a href="#" onclick="mostrarTela('tela-login')">Entrar</a></p>
-      <p id="cad-erro" class="erro"></p>
-    </div>
-  </div>
-
-  <!-- ===== TELA PRINCIPAL (DASHBOARD) ===== -->
-  <div id="tela-dashboard" class="tela">
-    <header>
-      <h1>🏐 Quadra de Vôlei</h1>
-      <div>
-        <span id="usuario-nome"></span>
-        <button onclick="logoutUsuario()" class="btn-logout">Sair</button>
+      <p class="subtitle">Faça login para acessar o sistema</p>
+      <div id="login-erro" class="msg error"></div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" />
       </div>
-    </header>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-senha" placeholder="Sua senha" />
+      </div>
+      <button class="btn btn-primary" onclick="loginUsuario()">Entrar</button>
+      <div class="auth-link">Não tem conta? <a href="#" onclick="mostrarTela('tela-cadastro')">Cadastre-se</a></div>
+    </div>
+  </div>
+</div>
 
-    <main>
-      <!-- NOVA RESERVA -->
-      <section class="card">
-        <h2>📅 Nova Reserva</h2>
-        <label>Data:</label>
-        <input type="date" id="reserva-data" />
-        <label>Horário de início:</label>
-        <input type="time" id="reserva-inicio" />
-        <label>Horário de fim:</label>
-        <input type="time" id="reserva-fim" />
-        <button onclick="criarReserva()">Reservar</button>
-        <p id="reserva-msg" class="msg"></p>
-      </section>
+<!-- ===== TELA DE CADASTRO ===== -->
+<div id="tela-cadastro" class="tela">
+  <div class="auth-container">
+    <div class="auth-box">
+      <h1>🏐 Quadra de Vôlei</h1>
+      <p class="subtitle">Crie sua conta gratuita</p>
+      <div id="cad-erro" class="msg error"></div>
+      <div class="form-group">
+        <label>Nome completo</label>
+        <input type="text" id="cad-nome" placeholder="João Silva" />
+      </div>
+      <div class="form-group">
+        <label>Telefone</label>
+        <input type="tel" id="cad-telefone" placeholder="(11) 99999-9999" />
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="cad-email" placeholder="seu@email.com" />
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="cad-senha" placeholder="Mínimo 6 caracteres" />
+      </div>
+      <button class="btn btn-primary" onclick="cadastrarUsuario()">Criar Conta</button>
+      <div class="auth-link">Já tem conta? <a href="#" onclick="mostrarTela('tela-login')">Entrar</a></div>
+    </div>
+  </div>
+</div>
 
-      <!-- MINHAS RESERVAS -->
-      <section class="card">
-        <h2>📋 Minhas Reservas</h2>
-        <div id="lista-reservas">Carregando...</div>
-      </section>
+<!-- ===== TELA PRINCIPAL (DASHBOARD) ===== -->
+<div id="tela-dashboard" class="tela">
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">🏐 Quadra de Vôlei</div>
+    <div class="navbar-actions">
+      <span id="nome-usuario"></span>
+      <button class="btn-logout" onclick="sairUsuario()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav>
+        <a href="#" class="active" onclick="mostrarSecao('secao-reservas')">📅 Reservas</a>
+        <a href="#" onclick="mostrarSecao('secao-pagamentos')">💳 Pagamentos</a>
+      </nav>
+    </aside>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+
+      <!-- Seção Reservas -->
+      <div id="secao-reservas">
+        <h1 class="page-title">📅 Nova Reserva</h1>
+        <div class="card" style="margin-bottom:24px">
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="reserva-data" />
+          </div>
+          <div class="form-group">
+            <label>Horário de início</label>
+            <input type="time" id="reserva-inicio" />
+          </div>
+          <div class="form-group">
+            <label>Horário de fim</label>
+            <input type="time" id="reserva-fim" />
+          </div>
+          <div id="reserva-msg" class="msg"></div>
+          <button class="btn btn-primary" onclick="criarReserva()">Reservar</button>
+        </div>
+
+        <h2 class="page-title">📋 Minhas Reservas</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Início</th>
+                <th>Fim</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="lista-reservas">
+              <tr><td colspan="5">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Seção Pagamentos -->
+      <div id="secao-pagamentos" style="display:none">
+        <h1 class="page-title">💳 Pagamentos</h1>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Reserva</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody id="lista-pagamentos">
+              <tr><td colspan="4">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </main>
   </div>
+</div>
 
-  <!-- Scripts (módulos ES6) -->
-  <script type="module" src="js/firebase.js"></script>
-  <script type="module" src="js/auth.js"></script>
-  <script type="module" src="js/reservas.js"></script>
-  <script type="module" src="js/pagamentos.js"></script>
+<script src="js/firebase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/reservas.js"></script>
+<script src="js/pagamentos.js"></script>
+
+<script>
+function mostrarTela(id) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.getElementById(id).classList.add('ativa');
+}
+function mostrarSecao(id) {
+  document.querySelectorAll('#tela-dashboard .main-content > div').forEach(s => s.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+  document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+
+<style>
+.tela { display: none; }
+.tela.ativa { display: block; }
+</style>
 
 </body>
 </html>
