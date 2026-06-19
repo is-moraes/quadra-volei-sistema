@@ -1,9 +1,6 @@
-// ===== FIREBASE CONFIG - Modular Mode =====
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getFirestore, collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-
 // ===== FIREBASE CONFIG - Compat Mode =====
+// Versão: 9.23.0 (mesma do index.html)
+
 const firebaseConfig = {
   apiKey: "AIzaSyDY0GvcQ6kYdoGL2eWnvCFPgb4M496h_3o",
   authDomain: "quadra-volei-sistema.firebaseapp.com",
@@ -14,11 +11,11 @@ const firebaseConfig = {
 };
 
 // Inicializar Firebase (compat mode)
-if (!firebase.apps.length) {
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-// Exportar helpers do Firestore
-export { collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp };
+
+// Expor Firestore e Auth globalmente para outros scripts compat
+// (os scripts js/*.js sao carregados apos os compat bundles do index.html)
+// as funcoes sao expostas no window pelo firebase compat
+// Nada precisa ser exportado via ES modules - tudo via window.firebase
