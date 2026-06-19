@@ -34,12 +34,16 @@ async function listarTodosPagamentos() {
 
 // ── Listar pagamentos do cliente ──────────────────────────────
 async function listarPagamentosCliente(clienteId) {
+      try {
   const q = fs().collection(COL)
     .where('clienteId', '==', clienteId)
     .orderBy('criadoEm', 'desc');
   const snap = await q.get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-}
+    } catch (e) {
+        console.error('Erro ao listar pagamentos do cliente:', e);
+        return [];
+    }}
 
 // ── Buscar pagamento por reserva ──────────────────────────────
 async function getPagamentoPorReserva(reservaId) {
