@@ -1,115 +1,99 @@
-import { db } from './firebase.js';
-import {
-  collection, addDoc, getDocs, getDoc, updateDoc,
-  doc, query, where, orderBy, serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { atualizarStatusReserva } from './reservas.js';
-import { formatarMoeda } from './reservas.js';
+// ===== PAGAMENTOS.JS - Compat Mode =====
+// Usar window.firebase que ja esta disponivel globalmente
 
 const COL = 'pagamentos';
 
+// Helpers de acesso ao Firestore compat
+function fs() { return window.firebase.firestore(); }
+function serverTs() { return window.firebase.firestore.FieldValue.serverTimestamp(); }
+
+// funcoes expostas por reservas.js (compat mode)
+// listarReservasCliente ja existe no window
+// formatarMoeda ja existe no window
+
 // ── Registrar pagamento ──────────────────────────────────────────
-export async function registrarPagamento(dados) {
+async function registrarPagamento(dados) {
   // dados: { reservaId, clienteId, clienteNome, valor, metodoPagamento, observacao }
-  const ref = await addDoc(collection(db, COL), {
+  const ref = await fs().collection(COL).add({
     ...dados,
     status: 'pago',
-    paidAt: serverTimestamp(),
-    criadoEm: serverTimestamp()
+    paidAt: serverTs(),
+    criadoEm: serverTs()
   });
-
   // Atualiza status da reserva para confirmada
   await atualizarStatusReserva(dados.reservaId, 'confirmada');
-
   return ref.id;
 }
 
 // ── Listar todos os pagamentos (admin) ──────────────────────────
-export async function listarTodosPagamentos() {
-  const q = query(collection(db, COL), orderBy('criadoEm', 'desc'));
-  const snap = await getDocs(q);
+async function listarTodosPagamentos() {
+  const q = fs().collection(COL).orderBy('criadoEm', 'desc');
+  const snap = await q.get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 // ── Listar pagamentos do cliente ──────────────────────────────
-export async function listarPagamentosCliente(clienteId) {
-  const q = query(
-    collection(db, COL),
-    where('clienteId', '==', clienteId),
-    orderBy('criadoEm', 'desc')
-  );
-  const snap = await getDocs(q);
+async function listarPagamentosCliente(clienteId) {
+  const q = fs().collection(COL)
+    .where('clienteId', '==', clienteId)
+    .orderBy('criadoEm', 'desc');
+  const snap = await q.get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 // ── Buscar pagamento por reserva ──────────────────────────────
-export async function getPagamentoPorReserva(reservaId) {
-  const q = query(
-    collection(db, COL),
-    where('reservaId', '==', reservaId)
-  );
-  const snap = await getDocs(q);
+async function getPagamentoPorReserva(reservaId) {
+  const q = fs().collection(COL).where('reservaId', '==', reservaId);
+  const snap = await q.get();
   if (snap.empty) return null;
   const d = snap.docs[0];
   return { id: d.id, ...d.data() };
 }
 
 // ── Buscar um pagamento ────────────────────────────────────────
-export async function getPagamento(id) {
-  const snap = await getDoc(doc(db, COL, id));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+async function getPagamento(id) {
+  const snap = await fs().collection(COL).doc(id).get();
+  return snap.exists ? { id: snap.id, ...snap.data() } : null;
 }
 
 // ── Estornar pagamento ────────────────────────────────────────
-export async function estornarPagamento(pagamentoId, reservaId) {
-  await updateDoc(doc(db, COL, pagamentoId), {
+async function estornarPagamento(pagamentoId, reservaId) {
+  await fs().collection(COL).doc(pagamentoId).update({
     status: 'estornado',
-    estornadoEm: serverTimestamp()
+    estornadoEm: serverTs()
   });
   await atualizarStatusReserva(reservaId, 'cancelada');
 }
 
-// ── Métodos de pagamento disponíveis ────────────────────────────
-export const METODOS_PAGAMENTO = [
-  { value: 'pix',         label: 'PIX' },
-  { value: 'cartao_cred', label: 'Cartão de Crédito' },
-  { value: 'cartao_deb',  label: 'Cartão de Débito' },
-  { value: 'dinheiro',    label: 'Dinheiro' },
-  { value: 'transferencia', label: 'Transferência Bancária' }
+// ── Metodos de pagamento disponiveis ────────────────────────────
+const METODOS_PAGAMENTO = [
+  { value: 'pix', label: 'PIX' },
+  { value: 'cartao_cred', label: 'Cartao de Credito' },
+  { value: 'cartao_deb', label: 'Cartao de Debito' },
+  { value: 'dinheiro', label: 'Dinheiro' },
+  { value: 'transferencia', label: 'Transferencia Bancaria' }
 ];
 
 // ── Render tabela de pagamentos ───────────────────────────────
-export function renderTabelaPagamentos(pagamentos, tbodyId, opcoes = {}) {
+function renderTabelaPagamentos(pagamentos, tbodyId, opcoes = {}) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
-
-  if (pagamentos.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;padding:24px">Nenhum pagamento encontrado.</td></tr>`;
+  if (!pagamentos || pagamentos.length === 0) {
+    tbody.innerHTML = 'Nenhum pagamento encontrado.';
     return;
   }
-
   tbody.innerHTML = pagamentos.map(p => {
     const metodo = METODOS_PAGAMENTO.find(m => m.value === p.metodoPagamento);
-    const statusClass = p.status === 'pago' ? 'badge-paid'
-      : p.status === 'estornado' ? 'badge-cancelled'
-      : 'badge-pending';
-    const statusLabel = p.status === 'pago' ? 'Pago'
-      : p.status === 'estornado' ? 'Estornado'
-      : p.status;
-    return `
-      <tr>
-        <td>${p.clienteNome || '-'}</td>
-        <td>${p.reservaId || '-'}</td>
-        <td>${formatarMoeda(p.valor)}</td>
-        <td>${metodo ? metodo.label : (p.metodoPagamento || '-')}</td>
-        <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-        <td>
-          ${opcoes.estornar && p.status === 'pago'
-            ? `<button class="btn btn-danger btn-sm" data-id="${p.id}" data-reserva="${p.reservaId}">Estornar</button>`
-            : ''}
-        </td>
-      </tr>
-    `;
+    const statusClass = p.status === 'pago' ? 'badge-paid' : p.status === 'estornado' ? 'badge-cancelled' : 'badge-pending';
+    const statusLabel = p.status === 'pago' ? 'Pago' : p.status === 'estornado' ? 'Estornado' : p.status;
+    return '<tr>' +
+      '<td>' + (p.clienteNome || '-') + '</td>' +
+      '<td>' + (p.reservaId || '-') + '</td>' +
+      '<td>' + formatarMoeda(p.valor) + '</td>' +
+      '<td>' + (metodo ? metodo.label : (p.metodoPagamento || '-')) + '</td>' +
+      '<td><span class="badge ' + statusClass + '">' + statusLabel + '</span></td>' +
+      '<td>' + (opcoes.estornar && p.status === 'pago' ? '<button data-id="' + p.id + '" data-reserva="' + p.reservaId + '">Estornar</button>' : '') + '</td>' +
+    '</tr>';
   }).join('');
 
   // Eventos de estorno
@@ -132,31 +116,25 @@ export function renderTabelaPagamentos(pagamentos, tbodyId, opcoes = {}) {
   });
 }
 
-// ── Formulário de Pagamento (modal) ────────────────────────────
-export function iniciarFormPagamento(formId, onSuccess) {
+// ── Formul de Pagamento (modal) ────────────────────────────────
+function iniciarFormPagamento(formId, onSuccess) {
   const form = document.getElementById(formId);
   if (!form) return;
-
-  // Popular select de métodos
   const sel = form.querySelector('[name=metodoPagamento]');
   if (sel) {
-    sel.innerHTML = METODOS_PAGAMENTO.map(m =>
-      `<option value="${m.value}">${m.label}</option>`
-    ).join('');
+    sel.innerHTML = METODOS_PAGAMENTO.map(m => '<option value="' + m.value + '">' + m.label + '</option>').join('');
   }
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = form.querySelector('button[type=submit]');
     const dados = {
-      reservaId:        form.dataset.reservaId,
-      clienteId:        form.dataset.clienteId,
-      clienteNome:      form.dataset.clienteNome,
-      valor:            parseFloat(form.dataset.valor),
-      metodoPagamento:  form.metodoPagamento.value,
-      observacao:       (form.observacao?.value || '').trim()
+      reservaId: form.dataset.reservaId,
+      clienteId: form.dataset.clienteId,
+      clienteNome: form.dataset.clienteNome,
+      valor: parseFloat(form.dataset.valor),
+      metodoPagamento: form.metodoPagamento.value,
+      observacao: (form.observacao?.value || '').trim()
     };
-
     btn.disabled = true;
     try {
       const id = await registrarPagamento(dados);
@@ -167,3 +145,14 @@ export function iniciarFormPagamento(formId, onSuccess) {
     }
   });
 }
+
+// Expor funcoes globalmente (compat mode - sem exports)
+window.registrarPagamento = registrarPagamento;
+window.listarTodosPagamentos = listarTodosPagamentos;
+window.listarPagamentosCliente = listarPagamentosCliente;
+window.getPagamentoPorReserva = getPagamentoPorReserva;
+window.getPagamento = getPagamento;
+window.estornarPagamento = estornarPagamento;
+window.METODOS_PAGAMENTO = METODOS_PAGAMENTO;
+window.renderTabelaPagamentos = renderTabelaPagamentos;
+window.iniciarFormPagamento = iniciarFormPagamento;
