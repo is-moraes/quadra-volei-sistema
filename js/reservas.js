@@ -1,147 +1,291 @@
-import { db } from './firebase.js';
-import {
-  collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
-  doc, query, where, orderBy, serverTimestamp, Timestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+// ===== RESERVAS.JS - Compat Mode =====
+// Usa firebase.firestore() que já está disponível globalmente
 
 const COL = 'reservas';
+const fs = firebase.firestore.bind(firebase);
 
 // ── Criar reserva ────────────────────────────────────────────────
-export async function criarReserva(dados) {
-  // dados: { clienteId, clienteNome, quadraId, quadraNome, data, horaInicio, horaFim, valorTotal }
-  const ref = await addDoc(collection(db, COL), {
-    ...dados,
-    status: 'pendente',
-    criadoEm: serverTimestamp()
-  });
-  return ref.id;
+async function criarReserva(dados) {
+  try {
+    const ref = await firebase.firestore().collection(COL).add({
+      ...dados,
+      status: 'pendente',
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    return ref.id;
+  } catch (e) {
+    console.error('Erro ao criar reserva:', e);
+    throw e;
+  }
 }
 
 // ── Buscar todas as reservas (admin) ────────────────────────────
-export async function listarTodasReservas() {
-  const q = query(collection(db, COL), orderBy('criadoEm', 'desc'));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+async function listarTodasReservas() {
+  try {
+    const snap = await firebase.firestore().collection(COL)
+      .orderBy('criadoEm', 'desc').get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('Erro ao listar reservas:', e);
+    return [];
+  }
 }
 
-// ── Buscar reservas do cliente ────────────────────────────────
-export async function listarReservasCliente(clienteId) {
-  const q = query(
-    collection(db, COL),
-    where('clienteId', '==', clienteId),
-    orderBy('criadoEm', 'desc')
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+// ── Buscar reservas do cliente ──────────────────────────────────
+async function listarReservasCliente(clienteId) {
+  try {
+    const snap = await firebase.firestore().collection(COL)
+      .where('clienteId', '==', clienteId)
+      .orderBy('criadoEm', 'desc').get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('Erro ao listar reservas do cliente:', e);
+    return [];
+  }
 }
 
-// ── Buscar reservas por data/quadra (verifica disponibilidade) ──────
-export async function verificarDisponibilidade(quadraId, data) {
-  const q = query(
-    collection(db, COL),
-    where('quadraId', '==', quadraId),
-    where('data', '==', data),
-    where('status', 'in', ['pendente', 'confirmada'])
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+// ── Buscar reserva por ID ───────────────────────────────────────
+async function getReserva(id) {
+  try {
+    const doc = await firebase.firestore().collection(COL).doc(id).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } : null;
+  } catch (e) {
+    console.error('Erro ao buscar reserva:', e);
+    return null;
+  }
 }
 
-// ── Buscar uma reserva ──────────────────────────────────────────
-export async function getReserva(id) {
-  const snap = await getDoc(doc(db, COL, id));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+// ── Atualizar status ────────────────────────────────────────────
+async function atualizarStatusReserva(id, status) {
+  try {
+    await firebase.firestore().collection(COL).doc(id).update({
+      status,
+      atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {
+    console.error('Erro ao atualizar status:', e);
+    throw e;
+  }
 }
 
-// ── Atualizar status da reserva ───────────────────────────────
-export async function atualizarStatusReserva(id, status) {
-  await updateDoc(doc(db, COL, id), { status, atualizadoEm: serverTimestamp() });
+// ── Cancelar reserva ────────────────────────────────────────────
+async function cancelarReserva(id) {
+  try {
+    await firebase.firestore().collection(COL).doc(id).update({
+      status: 'cancelada',
+      canceladoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {
+    console.error('Erro ao cancelar reserva:', e);
+    throw e;
+  }
 }
 
-// ── Cancelar reserva ───────────────────────────────────────────
-export async function cancelarReserva(id) {
-  await updateDoc(doc(db, COL, id), {
-    status: 'cancelada',
-    canceladoEm: serverTimestamp()
-  });
+// ── Excluir reserva ─────────────────────────────────────────────
+async function excluirReserva(id) {
+  try {
+    await firebase.firestore().collection(COL).doc(id).delete();
+  } catch (e) {
+    console.error('Erro ao excluir reserva:', e);
+    throw e;
+  }
 }
 
-// ── Excluir reserva (admin) ────────────────────────────────────
-export async function excluirReserva(id) {
-  await deleteDoc(doc(db, COL, id));
+// ── Verificar disponibilidade ───────────────────────────────────
+async function verificarDisponibilidade(quadraId, data) {
+  try {
+    const snap = await firebase.firestore().collection(COL)
+      .where('quadraId', '==', quadraId)
+      .where('data', '==', data)
+      .where('status', 'in', ['pendente', 'confirmada'])
+      .get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('Erro ao verificar disponibilidade:', e);
+    return [];
+  }
 }
 
-// ── Helpers de UI ────────────────────────────────────────────────
-export function statusBadge(status) {
+// ── Helpers de UI ───────────────────────────────────────────────
+function statusBadge(status) {
   const map = {
-    pendente:   '<span class="badge badge-pending">Pendente</span>',
-    confirmada: '<span class="badge badge-confirmed">Confirmada</span>',
-    cancelada:  '<span class="badge badge-cancelled">Cancelada</span>',
-    concluida:  '<span class="badge badge-paid">Concluída</span>'
+    pendente: `<span class="badge badge-pending">Pendente</span>`,
+    confirmada: `<span class="badge badge-confirmed">Confirmada</span>`,
+    cancelada: `<span class="badge badge-cancelled">Cancelada</span>`,
+    concluida: `<span class="badge badge-completed">Concluída</span>`
   };
   return map[status] || `<span class="badge">${status}</span>`;
 }
 
-export function formatarData(data) {
-  // data: 'YYYY-MM-DD'
+function formatarData(data) {
   if (!data) return '-';
-  const [y, m, d] = data.split('-');
-  return `${d}/${m}/${y}`;
+  const parts = data.split('-');
+  if (parts.length !== 3) return data;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-export function formatarMoeda(valor) {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency', currency: 'BRL'
-  }).format(valor || 0);
+function formatarMoeda(valor) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
 }
 
-// ── Renderizar tabela de reservas ───────────────────────────────
-export function renderTabelaReservas(reservas, tbodyId, opcoes = {}) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
+function renderTabelaReservas(reservas, containerId, opcoes = {}) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
 
-  if (reservas.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;padding:24px">Nenhuma reserva encontrada.</td></tr>`;
+  if (!reservas || reservas.length === 0) {
+    container.textContent = 'Nenhuma reserva encontrada.';
     return;
   }
 
-  tbody.innerHTML = reservas.map(r => `
-    <tr>
-      <td>${r.clienteNome || '-'}</td>
-      <td>${r.quadraNome || '-'}</td>
+  let html = `<table class="tabela"><thead><tr>
+    <th>Data</th><th>Horário</th><th>Quadra</th><th>Valor</th><th>Status</th><th>Ações</th>
+  </tr></thead><tbody>`;
+
+  reservas.forEach(r => {
+    html += `<tr>
       <td>${formatarData(r.data)}</td>
       <td>${r.horaInicio || '-'} – ${r.horaFim || '-'}</td>
+      <td>${r.quadraNome || '-'}</td>
       <td>${formatarMoeda(r.valorTotal)}</td>
       <td>${statusBadge(r.status)}</td>
-      <td>
-        ${opcoes.confirmar && r.status === 'pendente'
-          ? `<button class="btn btn-success btn-sm" data-id="${r.id}" data-acao="confirmar">Confirmar</button> `
-          : ''}
-        ${opcoes.cancelar && (r.status === 'pendente' || r.status === 'confirmada')
-          ? `<button class="btn btn-danger btn-sm" data-id="${r.id}" data-acao="cancelar">Cancelar</button>`
-          : ''}
-        ${opcoes.excluir
-          ? `<button class="btn btn-danger btn-sm" data-id="${r.id}" data-acao="excluir">Excluir</button>`
-          : ''}
-      </td>
-    </tr>
-  `).join('');
+      <td>`;
 
-  // Eventos
-  tbody.querySelectorAll('button[data-acao]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.id;
-      const acao = btn.dataset.acao;
-      btn.disabled = true;
-      try {
-        if (acao === 'confirmar') await atualizarStatusReserva(id, 'confirmada');
-        if (acao === 'cancelar')  await cancelarReserva(id);
-        if (acao === 'excluir')   await excluirReserva(id);
-        btn.closest('tr').remove();
-      } catch (e) {
-        alert('Erro: ' + e.message);
-        btn.disabled = false;
-      }
-    });
+    if (opcoes.cancelar && (r.status === 'pendente' || r.status === 'confirmada')) {
+      html += `<button class="btn btn-sm btn-outline" onclick="cancelarReservaPorId('${r.id}')">Cancelar</button> `;
+    }
+    if (opcoes.excluir) {
+      html += `<button class="btn btn-sm btn-danger" onclick="excluirReservaPorId('${r.id}')">Excluir</button>`;
+    }
+
+    html += `</td></tr>`;
   });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
 }
+
+// ── FUNÇÕES GLOBAIS (usadas pelo HTML) ──────────────────────────
+
+// Carregar reservas do usuário logado
+async function carregarReservas() {
+  const listaEl = document.getElementById('lista-reservas');
+  if (!listaEl) return;
+
+  listaEl.textContent = 'Carregando...';
+
+  try {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      listaEl.textContent = 'Faça login para ver suas reservas.';
+      return;
+    }
+
+    const reservas = await listarReservasCliente(user.uid);
+    renderTabelaReservas(reservas, 'lista-reservas', { cancelar: true });
+  } catch (e) {
+    console.error('Erro ao carregar reservas:', e);
+    listaEl.textContent = 'Erro ao carregar reservas. Tente novamente.';
+  }
+}
+
+// Cancelar reserva pelo ID (wrapper global)
+async function cancelarReservaPorId(id) {
+  if (!confirm('Deseja cancelar esta reserva?')) return;
+  try {
+    await cancelarReserva(id);
+    alert('Reserva cancelada com sucesso!');
+    carregarReservas();
+  } catch (e) {
+    alert('Erro: ' + e.message);
+  }
+}
+
+// Excluir reserva pelo ID (wrapper global - admin)
+async function excluirReservaPorId(id) {
+  if (!confirm('Deseja EXCLUIR esta reserva permanentemente?')) return;
+  try {
+    await excluirReserva(id);
+    alert('Reserva excluída!');
+    carregarReservas();
+  } catch (e) {
+    alert('Erro: ' + e.message);
+  }
+}
+
+// Confirmar reserva
+async function confirmarReserva() {
+  const dataEl = document.getElementById('reserva-data');
+  const horarioEl = document.getElementById('reserva-horario');
+  const obsEl = document.getElementById('reserva-obs');
+  const msgEl = document.getElementById('reserva-msg');
+
+  const data = dataEl?.value;
+  const horario = horarioEl?.value;
+  const obs = obsEl?.value || '';
+
+  if (!data || !horario) {
+    if (msgEl) {
+      msgEl.textContent = 'Preencha data e horário.';
+      msgEl.className = 'msg error show';
+    }
+    return;
+  }
+
+  const btn = document.querySelector('#tela-nova-reserva .btn-primary');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Agendando...';
+
+  try {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      throw new Error('Usuário não logado.');
+    }
+
+    const userDoc = await firebase.firestore().collection('usuarios').doc(user.uid).get();
+    const userData = userDoc.exists ? userDoc.data() : {};
+
+    const horaInicio = horario;
+    const horaFim = horario.split(':')[0] + ':' + (parseInt(horario.split(':')[1]) + 1).toString().padStart(2, '0');
+
+    const reservaId = await criarReserva({
+      clienteId: user.uid,
+      clienteNome: userData.nome || user.email,
+      quadraId: 'quadra-1',
+      quadraNome: 'Quadra Principal',
+      data,
+      horaInicio,
+      horaFim,
+      observacoes: obs,
+      valorTotal: 50
+    });
+
+    if (msgEl) {
+      msgEl.textContent = 'Reserva confirmada! ID: ' + reservaId;
+      msgEl.className = 'msg success show';
+    }
+
+    // Reset form
+    dataEl.value = '';
+    horarioEl.value = '';
+    obsEl.value = '';
+
+    // Reload reservas
+    carregarReservas();
+  } catch (e) {
+    if (msgEl) {
+      msgEl.textContent = 'Erro: ' + e.message;
+      msgEl.className = 'msg error show';
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Confirmar Reserva';
+  }
+}
+
+// Expor funções globalmente
+window.carregarReservas = carregarReservas;
+window.cancelarReservaPorId = cancelarReservaPorId;
+window.excluirReservaPorId = excluirReservaPorId;
+window.confirmarReserva = confirmarReserva;
+window.formatarMoeda = formatarMoeda;
+window.listarReservasCliente = listarReservasCliente;
