@@ -3,6 +3,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
+// ===== FIREBASE CONFIG - Compat Mode =====
 const firebaseConfig = {
   apiKey: "AIzaSyDY0GvcQ6kYdoGL2eWnvCFPgb4M496h_3o",
   authDomain: "quadra-volei-sistema.firebaseapp.com",
@@ -12,6 +13,10 @@ const firebaseConfig = {
   appId: "1:332015795716:web:2cc619af2d4979d9bcbf51"
 };
 
+// Inicializar Firebase (compat mode)
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
