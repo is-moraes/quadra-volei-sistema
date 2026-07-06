@@ -2,9 +2,8 @@
 // Usa firebase.firestore() que já está disponível globalmente
 
 const COL = 'reservas';
-const fs = firebase.firestore.bind(firebase);
 
-// ── Criar reserva ────────────────────────────────────────────────
+// ── Criar reserva ──────────────────────────────────────────────────
 async function criarReserva(dados) {
   try {
     const ref = await firebase.firestore().collection(COL).add({
@@ -19,7 +18,7 @@ async function criarReserva(dados) {
   }
 }
 
-// ── Buscar todas as reservas (admin) ────────────────────────────
+// ── Buscar todas as reservas (admin) ──────────────────────────────
 async function listarTodasReservas() {
   try {
     const snap = await firebase.firestore().collection(COL)
@@ -31,7 +30,7 @@ async function listarTodasReservas() {
   }
 }
 
-// ── Buscar reservas do cliente ──────────────────────────────────
+// ── Buscar reservas do cliente ────────────────────────────────────
 async function listarReservasCliente(clienteId) {
   try {
     const snap = await firebase.firestore().collection(COL)
@@ -44,7 +43,7 @@ async function listarReservasCliente(clienteId) {
   }
 }
 
-// ── Buscar reserva por ID ───────────────────────────────────────
+// ── Buscar reserva por ID ─────────────────────────────────────────
 async function getReserva(id) {
   try {
     const doc = await firebase.firestore().collection(COL).doc(id).get();
@@ -55,7 +54,7 @@ async function getReserva(id) {
   }
 }
 
-// ── Atualizar status ────────────────────────────────────────────
+// ── Atualizar status ──────────────────────────────────────────────
 async function atualizarStatusReserva(id, status) {
   try {
     await firebase.firestore().collection(COL).doc(id).update({
@@ -68,7 +67,7 @@ async function atualizarStatusReserva(id, status) {
   }
 }
 
-// ── Cancelar reserva ────────────────────────────────────────────
+// ── Cancelar reserva ──────────────────────────────────────────────
 async function cancelarReserva(id) {
   try {
     await firebase.firestore().collection(COL).doc(id).update({
@@ -81,7 +80,7 @@ async function cancelarReserva(id) {
   }
 }
 
-// ── Excluir reserva ─────────────────────────────────────────────
+// ── Excluir reserva ───────────────────────────────────────────────
 async function excluirReserva(id) {
   try {
     await firebase.firestore().collection(COL).doc(id).delete();
@@ -91,7 +90,7 @@ async function excluirReserva(id) {
   }
 }
 
-// ── Verificar disponibilidade ───────────────────────────────────
+// ── Verificar disponibilidade ─────────────────────────────────────
 async function verificarDisponibilidade(quadraId, data) {
   try {
     const snap = await firebase.firestore().collection(COL)
@@ -106,13 +105,13 @@ async function verificarDisponibilidade(quadraId, data) {
   }
 }
 
-// ── Helpers de UI ───────────────────────────────────────────────
+// ── Helpers de UI ─────────────────────────────────────────────────
 function statusBadge(status) {
   const map = {
-    pendente: `<span class="badge badge-pending">Pendente</span>`,
-    confirmada: `<span class="badge badge-confirmed">Confirmada</span>`,
-    cancelada: `<span class="badge badge-cancelled">Cancelada</span>`,
-    concluida: `<span class="badge badge-completed">Concluída</span>`
+    pendente: `<span class="badge badge-pendente">Pendente</span>`,
+    confirmada: `<span class="badge badge-confirmada">Confirmada</span>`,
+    cancelada: `<span class="badge badge-cancelada">Cancelada</span>`,
+    concluida: `<span class="badge badge-concluida">Concluída</span>`
   };
   return map[status] || `<span class="badge">${status}</span>`;
 }
@@ -131,16 +130,13 @@ function formatarMoeda(valor) {
 function renderTabelaReservas(reservas, containerId, opcoes = {}) {
   const container = document.getElementById(containerId);
   if (!container) return;
-
   if (!reservas || reservas.length === 0) {
-    container.textContent = 'Nenhuma reserva encontrada.';
+    container.innerHTML = '<p>Nenhuma reserva encontrada.</p>';
     return;
   }
-
   let html = `<table class="tabela"><thead><tr>
     <th>Data</th><th>Horário</th><th>Quadra</th><th>Valor</th><th>Status</th><th>Ações</th>
   </tr></thead><tbody>`;
-
   reservas.forEach(r => {
     html += `<tr>
       <td>${formatarData(r.data)}</td>
@@ -149,42 +145,36 @@ function renderTabelaReservas(reservas, containerId, opcoes = {}) {
       <td>${formatarMoeda(r.valorTotal)}</td>
       <td>${statusBadge(r.status)}</td>
       <td>`;
-
     if (opcoes.cancelar && (r.status === 'pendente' || r.status === 'confirmada')) {
-      html += `<button class="btn btn-sm btn-outline" onclick="cancelarReservaPorId('${r.id}')">Cancelar</button> `;
+      html += `<button class="btn btn-sm btn-cancelar" onclick="cancelarReservaPorId('${r.id}')">Cancelar</button>`;
     }
     if (opcoes.excluir) {
-      html += `<button class="btn btn-sm btn-danger" onclick="excluirReservaPorId('${r.id}')">Excluir</button>`;
+      html += `<button class="btn btn-sm btn-excluir" onclick="excluirReservaPorId('${r.id}')">Excluir</button>`;
     }
-
     html += `</td></tr>`;
   });
-
   html += `</tbody></table>`;
   container.innerHTML = html;
 }
 
-// ── FUNÇÕES GLOBAIS (usadas pelo HTML) ──────────────────────────
+// ── FUNÇÕES GLOBAIS (usadas pelo HTML) ────────────────────────────
 
 // Carregar reservas do usuário logado
 async function carregarReservas() {
   const listaEl = document.getElementById('lista-reservas');
   if (!listaEl) return;
-
-  listaEl.textContent = 'Carregando...';
-
+  listaEl.innerHTML = '<p>Carregando...</p>';
   try {
     const user = firebase.auth().currentUser;
     if (!user) {
-      listaEl.textContent = 'Faça login para ver suas reservas.';
+      listaEl.innerHTML = '<p>Faça login para ver suas reservas.</p>';
       return;
     }
-
     const reservas = await listarReservasCliente(user.uid);
     renderTabelaReservas(reservas, 'lista-reservas', { cancelar: true });
   } catch (e) {
     console.error('Erro ao carregar reservas:', e);
-    listaEl.textContent = 'Erro ao carregar reservas. Tente novamente.';
+    listaEl.innerHTML = '<p>Erro ao carregar reservas. Tente novamente.</p>';
   }
 }
 
@@ -212,16 +202,16 @@ async function excluirReservaPorId(id) {
   }
 }
 
-// Confirmar reserva
+// Confirmar nova reserva
 async function confirmarReserva() {
   const dataEl = document.getElementById('reserva-data');
   const horarioEl = document.getElementById('reserva-horario');
   const obsEl = document.getElementById('reserva-obs');
   const msgEl = document.getElementById('reserva-msg');
 
-  const data = dataEl?.value;
-  const horario = horarioEl?.value;
-  const obs = obsEl?.value || '';
+  const data = dataEl ? dataEl.value : '';
+  const horario = horarioEl ? horarioEl.value : '';
+  const obs = obsEl ? obsEl.value : '';
 
   if (!data || !horario) {
     if (msgEl) {
@@ -232,20 +222,20 @@ async function confirmarReserva() {
   }
 
   const btn = document.querySelector('#tela-nova-reserva .btn-primary');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Agendando...';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Agendando...';
+  }
 
   try {
     const user = firebase.auth().currentUser;
-    if (!user) {
-      throw new Error('Usuário não logado.');
-    }
+    if (!user) throw new Error('Usuário não logado.');
 
     const userDoc = await firebase.firestore().collection('usuarios').doc(user.uid).get();
     const userData = userDoc.exists ? userDoc.data() : {};
 
-    const horaInicio = horario;
-    const horaFim = horario.split(':')[0] + ':' + (parseInt(horario.split(':')[1]) + 1).toString().padStart(2, '0');
+    const [hh, mm] = horario.split(':').map(Number);
+    const horaFim = `${String(hh + 1).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 
     const reservaId = await criarReserva({
       clienteId: user.uid,
@@ -253,7 +243,7 @@ async function confirmarReserva() {
       quadraId: 'quadra-1',
       quadraNome: 'Quadra Principal',
       data,
-      horaInicio,
+      horaInicio: horario,
       horaFim,
       observacoes: obs,
       valorTotal: 50
@@ -263,13 +253,9 @@ async function confirmarReserva() {
       msgEl.textContent = 'Reserva confirmada! ID: ' + reservaId;
       msgEl.className = 'msg success show';
     }
-
-    // Reset form
-    dataEl.value = '';
-    horarioEl.value = '';
-    obsEl.value = '';
-
-    // Reload reservas
+    if (dataEl) dataEl.value = '';
+    if (horarioEl) horarioEl.value = '';
+    if (obsEl) obsEl.value = '';
     carregarReservas();
   } catch (e) {
     if (msgEl) {
@@ -277,8 +263,10 @@ async function confirmarReserva() {
       msgEl.className = 'msg error show';
     }
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Confirmar Reserva';
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Confirmar Reserva';
+    }
   }
 }
 
