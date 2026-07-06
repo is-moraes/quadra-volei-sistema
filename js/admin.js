@@ -42,7 +42,6 @@ async function logoutAdmin() {
 async function carregarClientes() {
   const tbody = document.getElementById('tabela-clientes');
   tbody.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>';
-
   try {
     const snap = await firebase.firestore().collection('clientes').orderBy('nome').get();
     const clientes = [];
@@ -65,14 +64,15 @@ async function carregarClientes() {
       const dias = Math.ceil((exp - hoje) / (1000 * 60 * 60 * 24));
       return dias >= 0 && dias <= 5;
     });
-
     const avisoEl = document.getElementById('aviso-vencimento');
-    if (vencendoEm5.length > 0) {
-      avisoEl.style.display = 'block';
-      avisoEl.innerHTML = '&#9888;&#65039; <strong>' + vencendoEm5.length + ' cliente(s)</strong> vencem nos proximos 5 dias: ' +
-        vencendoEm5.map(c => '<strong>' + c.nome + '</strong>').join(', ');
-    } else {
-      avisoEl.style.display = 'none';
+    if (avisoEl) {
+      if (vencendoEm5.length > 0) {
+        avisoEl.style.display = 'block';
+        avisoEl.innerHTML = '\u26a0\ufe0f <strong>' + vencendoEm5.length + ' cliente(s)</strong> vencem nos proximos 5 dias: ' +
+          vencendoEm5.map(c => '<strong>' + c.nome + '</strong>').join(', ');
+      } else {
+        avisoEl.style.display = 'none';
+      }
     }
 
     // Renderiza tabela
@@ -80,7 +80,6 @@ async function carregarClientes() {
       tbody.innerHTML = '<tr><td colspan="7">Nenhum cliente cadastrado.</td></tr>';
       return;
     }
-
     tbody.innerHTML = clientes.map(c => {
       const exp = c.dataExpiracao
         ? (c.dataExpiracao.toDate ? c.dataExpiracao.toDate() : new Date(c.dataExpiracao))
@@ -88,33 +87,30 @@ async function carregarClientes() {
       const diasRestantes = exp ? Math.ceil((exp - hoje) / (1000 * 60 * 60 * 24)) : null;
       const diasStr = diasRestantes !== null
         ? (diasRestantes <= 0
-            ? '<span class="dias-critico">Expirado</span>'
-            : diasRestantes <= 5
-              ? '<span class="dias-critico">' + diasRestantes + ' dias</span>'
-              : '<span class="dias-ok">' + diasRestantes + ' dias</span>')
+          ? '<span class="dias-restantes dias-critico">Expirado</span>'
+          : diasRestantes <= 5
+            ? '<span class="dias-restantes dias-critico">' + diasRestantes + ' dias</span>'
+            : '<span class="dias-restantes dias-ok">' + diasRestantes + ' dias</span>')
         : '-';
       const badgeClass = c.status === 'ativo' ? 'badge-ativo' : c.status === 'bloqueado' ? 'badge-bloqueado' : 'badge-expirado';
-      const statusLabel = c.status === 'ativo' ? '&#9989; Ativo' : c.status === 'bloqueado' ? '&#9940; Bloqueado' : '&#9200; Expirado';
+      const statusLabel = c.status === 'ativo' ? '\u2705 Ativo' : c.status === 'bloqueado' ? '\u26d4 Bloqueado' : '\u23f0 Expirado';
       const planoLabels = { trial: 'Trial', mensal: 'Mensal', trimestral: 'Trimestral', anual: 'Anual' };
-
       return `<tr>
-        <td><strong>${c.nome}</strong></td>
-        <td>${c.email}</td>
-        <td>${planoLabels[c.plano] || c.plano}</td>
+        <td><strong>${c.nome}</strong><br><small>${c.email}</small></td>
+        <td>${planoLabels[c.plano] || c.plano || '-'}</td>
         <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
         <td>${exp ? exp.toLocaleDateString('pt-BR') : '-'}</td>
-        <td class="dias-restantes">${diasStr}</td>
+        <td>${diasStr}</td>
         <td class="action-btns">
-          ${c.status !== 'ativo' ? `<button class="btn-sm btn-ativar" onclick="alterarStatus('${c.id}','ativo')">&#9989; Ativar</button>` : ''}
-          ${c.status !== 'bloqueado' ? `<button class="btn-sm btn-bloquear" onclick="alterarStatus('${c.id}','bloqueado')">&#9940; Bloquear</button>` : ''}
-          <button class="btn-sm btn-renovar" onclick="abrirModalRenovar('${c.id}','${c.nome}')">&#128260; Renovar</button>
-          <button class="btn-sm btn-excluir" onclick="excluirCliente('${c.id}','${c.nome}')">&#128465; Excluir</button>
+          ${c.status !== 'ativo' ? `<button class="btn-sm btn-ativar" onclick="alterarStatus('${c.id}','ativo')">\u2705 Ativar</button>` : ''}
+          ${c.status !== 'bloqueado' ? `<button class="btn-sm btn-bloquear" onclick="alterarStatus('${c.id}','bloqueado')">\u26d4 Bloquear</button>` : ''}
+          <button class="btn-sm btn-renovar" onclick="abrirModalRenovar('${c.id}','${c.nome.replace(/'/g, "\\'")}')">\uD83D\uDD04 Renovar</button>
+          <button class="btn-sm btn-excluir" onclick="excluirCliente('${c.id}','${c.nome.replace(/'/g, "\\'")}')">\uD83D\uDDD1 Excluir</button>
         </td>
       </tr>`;
     }).join('');
-
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="7">Erro ao carregar: ' + e.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="color:red">Erro ao carregar: ' + e.message + '</td></tr>';
   }
 }
 
@@ -132,7 +128,8 @@ async function alterarStatus(id, novoStatus) {
 // ===== RENOVAR LICENCA =====
 function abrirModalRenovar(id, nome) {
   clienteSelecionadoId = id;
-  document.getElementById('renovar-info').textContent = 'Cliente: ' + nome;
+  const info = document.getElementById('renovar-info');
+  if (info) info.textContent = 'Cliente: ' + nome;
   document.getElementById('modal-renovar').classList.add('open');
 }
 
@@ -180,7 +177,6 @@ async function criarNovoCliente() {
     const secondaryApp = firebase.apps.find(a => a.name === 'Secondary') ||
       firebase.initializeApp(firebase.app().options, 'Secondary');
     const secondaryAuth = secondaryApp.auth();
-
     const cred = await secondaryAuth.createUserWithEmailAndPassword(email, senha);
     const uid = cred.user.uid;
 
@@ -213,7 +209,6 @@ async function criarNovoCliente() {
       fecharModal('modal-novo-cliente');
       carregarClientes();
     }, 1500);
-
   } catch (e) {
     mostrarMsg(msgEl, 'Erro: ' + e.message, 'error');
   }
@@ -232,29 +227,49 @@ async function excluirCliente(id, nome) {
 
 // ===== UTILITARIOS =====
 function fecharModal(id) {
-  document.getElementById(id).classList.remove('open');
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
 }
 
 function mostrarMsg(el, texto, tipo) {
+  if (!el) return;
   el.textContent = texto;
   el.className = 'msg ' + tipo + ' show';
   setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// Fecha modal clicando fora
-document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('modal-overlay')) {
-    e.target.classList.remove('open');
+// ===== INICIALIZACAO (aguarda DOM estar pronto) =====
+document.addEventListener('DOMContentLoaded', () => {
+  // Fecha modal clicando fora
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-overlay')) {
+      e.target.classList.remove('open');
+    }
+  });
+
+  // Enter no login
+  document.addEventListener('keydown', (e) => {
+    const telaLogin = document.getElementById('tela-admin-login');
+    if (e.key === 'Enter' && telaLogin && telaLogin.style.display !== 'none') {
+      loginAdmin();
+    }
+  });
+
+  // Botao de login
+  const btnLogin = document.getElementById('loginAdmin');
+  if (btnLogin) {
+    btnLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginAdmin();
+    });
+  }
+
+  // Submit do form de login
+  const formLogin = document.getElementById('tela-admin-login');
+  if (formLogin) {
+    formLogin.addEventListener('submit', (e) => {
+      e.preventDefault();
+      loginAdmin();
+    });
   }
 });
-
-// Enter no login
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && document.getElementById('tela-admin-login').style.display !== 'none') {
-    loginAdmin();
-  }
-});
-
-// Click no botao de login
-document.getElementById('loginAdmin').addEventListener('click', (e) => { e.preventDefault(); loginAdmin(); });
-document.getElementById('tela-admin-login').addEventListener('submit', (e) => { e.preventDefault(); loginAdmin(); });
