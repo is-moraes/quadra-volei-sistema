@@ -1,174 +1,490 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Gerenciador de Licenças</title>
-  <link rel="stylesheet" href="css/style.css" />
-    <!-- Firebase Compat CDN -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <style>
-    .admin-header { background: #1a1a2e; color: #fff; padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; }
-    .admin-header h1 { font-size: 1.2rem; }
-    .admin-body { max-width: 1100px; margin: 32px auto; padding: 0 20px; }
-    .admin-login { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #1a1a2e; }
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
-    .stat-card { background: #fff; border-radius: 10px; padding: 20px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
-    .stat-card .label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.8px; color: #888; margin-bottom: 6px; }
-    .stat-card .number { font-size: 2rem; font-weight: 700; }
-    .stat-card.ativo .number { color: #43a047; }
-    .stat-card.expirado .number { color: #e53935; }
-    .stat-card.bloqueado .number { color: #fb8c00; }
-    .stat-card.total .number { color: #1a73e8; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .section-header h2 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
-    .badge-ativo { background: #e8f5e9; color: #2e7d32; }
-    .badge-expirado { background: #ffebee; color: #c62828; }
-    .badge-bloqueado { background: #fff3e0; color: #e65100; }
-    .dias-restantes { font-size: 0.82rem; color: #888; }
-    .dias-critico { color: #e53935; font-weight: 700; }
-    .dias-ok { color: #43a047; font-weight: 600; }
-    .action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-    .btn-sm { padding: 5px 10px; font-size: 0.78rem; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
-    .btn-ativar { background: #e8f5e9; color: #2e7d32; }
-    .btn-bloquear { background: #fff3e0; color: #e65100; }
-    .btn-renovar { background: #e3f2fd; color: #1565c0; }
-    .btn-excluir { background: #ffebee; color: #c62828; }
-    .modal-form .form-group { margin-bottom: 14px; }
-    .modal-form label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #444; }
-    .modal-form input, .modal-form select { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 0.9rem; outline: none; }
-    .modal-form input:focus { border-color: #1a73e8; }
-    .topo-aviso { background: #fff3e0; border-left: 4px solid #fb8c00; padding: 10px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 0.88rem; color: #7a4a00; }
-    #painel-admin { display: none; }
-    #tela-admin-login { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #1a1a2e, #1a73e8); }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuadraPro — Super Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
-<body style="background:#f0f4f8; margin:0;">
+<body>
 
-<!-- LOGIN ADMIN -->
-<div id="tela-admin-login">
-  <div class="auth-box" style="max-width:380px; width:90%;">
-    <h1 style="text-align:center; color:#1a73e8; margin-bottom:6px;">&#x1F512; Admin</h1>
-    <p style="text-align:center; color:#888; margin-bottom:24px; font-size:0.9rem;">Portal de Gerenciamento de Licenças</p>
-    <div id="admin-login-erro" class="msg error"></div>
-    <div class="form-group">
-      <label>E-mail Admin</label>
-      <input type="email" id="admin-email" placeholder="admin@seudominio.com" />
+<!-- ===================== LOGIN ===================== -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8l3.5 2.5-1.3 4.1h-4.4L8.5 10.5z" fill="#fff" stroke="none"/></svg></div>
+      <h1>QuadraPro <span class="pill pill-super" style="vertical-align:middle">ADMIN</span></h1>
+      <p>Painel administrativo — acesso restrito</p>
     </div>
-    <div class="form-group">
-      <label>Senha</label>
-      <input type="password" id="admin-senha" placeholder="Senha do administrador" />
+    <div id="loginErr" class="login-err hidden"></div>
+    <form id="loginForm">
+      <div class="field"><label>Usuário</label><input id="loginUser" autocomplete="username" required placeholder="admin"></div>
+      <div class="field"><label>Senha</label><input id="loginPass" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
+      <button class="login-btn" type="submit">Entrar</button>
+    </form>
+    <div class="demo-box">
+      <div class="dt">Conta de demonstração — clique para preencher</div>
+      <div class="demo-chip" data-u="admin" data-p="admin123"><span><b>Super Admin</b></span><code>admin / admin123</code></div>
     </div>
-    <button class="btn btn-primary" onclick="loginAdmin()">Entrar como Admin</button>
+    <div class="link-swap">É dono de quadra? <a href="portal.html">Acesse seu portal</a></div>
   </div>
 </div>
 
-<!-- PAINEL ADMIN -->
-<div id="painel-admin">
-  <div class="admin-header">
-    <h1>&#x1F512; Gerenciador de Licenças &mdash; Quadra de Vôlei</h1>
-    <div style="display:flex; align-items:center; gap:14px;">
-      <span id="admin-nome" style="font-size:0.9rem; opacity:0.85;"></span>
-      <button class="btn-sm btn-bloquear" onclick="logoutAdmin()">Sair</button>
+<!-- ===================== APP ===================== -->
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8l3.5 2.5-1.3 4.1h-4.4L8.5 10.5z" fill="#fff" stroke="none"/></svg></div>
+      <div><h1>QuadraPro</h1><p>Super Admin</p></div>
     </div>
-  </div>
-
-  <div class="admin-body">
-
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card total"><div class="label">Total de Clientes</div><div class="number" id="stat-total">0</div></div>
-      <div class="stat-card ativo"><div class="label">Ativos</div><div class="number" id="stat-ativos">0</div></div>
-      <div class="stat-card expirado"><div class="label">Expirados</div><div class="number" id="stat-expirados">0</div></div>
-      <div class="stat-card bloqueado"><div class="label">Bloqueados</div><div class="number" id="stat-bloqueados">0</div></div>
+    <div class="nav-label">Geral</div>
+    <button class="nav-item" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</button>
+    <button class="nav-item active" data-view="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a14 14 0 0 0 0 18M12 3a14 14 0 0 1 0 18"/></svg>Clientes (Quadras)</button>
+    <button class="nav-item" data-view="solicitacoes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h9l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M9 14l2 2 4-4"/></svg>Solicitações<span class="count" id="reqCount">0</span></button>
+    <button class="nav-item" data-view="planos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4z"/><path d="M4 10h16"/></svg>Planos</button>
+    <div class="nav-label">Financeiro</div>
+    <button class="nav-item" data-view="financeiro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16M12 4v16"/><circle cx="12" cy="12" r="9"/></svg>Arrecadação</button>
+    <div class="side-foot">
+      <button class="logout-btn" id="logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sair</button>
     </div>
+  </aside>
 
-    <!-- Aviso de vencimento próximo -->
-    <div id="aviso-vencimento" class="topo-aviso" style="display:none;"></div>
-
-    <!-- Tabela de clientes -->
-    <div class="table-wrapper">
-      <div class="table-header">
-        <h2>&#x1F4CB; Clientes / Quadras</h2>
-        <button class="btn btn-primary" style="padding:8px 18px; font-size:0.88rem;" onclick="abrirModalNovoCliente()">+ Novo Cliente</button>
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h2>Painel Administrativo <span class="pill pill-super">SUPER ADMIN</span></h2>
+        <div class="sub">Gestão de acessos e clientes (multi-tenant)</div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Nome / Quadra</th>
-            <th>E-mail</th>
-            <th>Plano</th>
-            <th>Status</th>
-            <th>Expira em</th>
-            <th>Dias Restantes</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="tabela-clientes">
-          <tr><td colspan="7" style="text-align:center; color:#888; padding:24px;">Carregando...</td></tr>
-        </tbody>
-      </table>
+      <div class="topbar-right">
+        <button class="icon-btn theme-btn" title="Tema"><svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="i-sun hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+        <div class="user-chip"><div class="av">SA</div><div><div class="nm">Super Admin</div><div class="rl">Administrador</div></div></div>
+      </div>
+    </header>
+    <div class="content">
+
+      <!-- Clientes -->
+      <section class="view active" data-view="clientes">
+        <div class="stats s5" id="superStats"></div>
+        <div class="grid rail-2">
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Clientes (Quadras) Cadastrados</h3><p>Cada quadra tem seu próprio login e portal isolado</p></div>
+              <button class="btn btn-primary" id="btnNovo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Novo Cliente</button>
+            </div>
+            <div class="toolbar">
+              <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="q" placeholder="Buscar por nome, domínio, cidade..."></div>
+              <select class="flt" id="fPlano"><option value="">Todos os Planos</option></select>
+              <select class="flt" id="fStatus"><option value="">Todos Status</option><option value="ativo">Ativo</option><option value="inad">Inadimplente</option><option value="susp">Suspenso</option></select>
+              <button class="btn" id="btnExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4M4 21h16"/></svg>Exportar</button>
+            </div>
+            <div class="tbl-wrap"><table>
+              <thead><tr><th>Cliente (Quadra)</th><th>Domínio</th><th>Plano</th><th>Status</th><th>Clientes</th><th>MRR</th><th>Ações</th></tr></thead>
+              <tbody id="tbody"></tbody>
+            </table></div>
+            <div class="pag"><div class="info" id="pagInfo"></div><div class="pages" id="pages"></div></div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <div class="card-head" style="margin-bottom:6px"><h3 style="font-size:15px">Solicitações Pendentes</h3><span class="badge badge-warn" id="reqBadge">0</span></div>
+              <div id="reqList"></div>
+            </div>
+            <div class="card">
+              <h3 style="font-size:15px;margin:0 0 16px">Distribuição por plano</h3>
+              <div class="donut-wrap"><div class="donut-box"><canvas id="planChart"></canvas></div><div class="legend" id="planLegend"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid g-3" style="margin-top:16px">
+          <div class="card"><div class="card-head"><h3 style="font-size:15px">Arrecadação (6 meses)</h3></div><div class="chart-box"><canvas id="revChart"></canvas></div></div>
+          <div class="card"><h3 style="font-size:15px;margin:0 0 16px">Status dos Clientes</h3><div class="donut-wrap"><div class="donut-box"><canvas id="statusChart"></canvas></div><div class="legend" id="statusLegend"></div></div></div>
+          <div class="card"><h3 style="font-size:15px;margin:0 0 16px">Ações Rápidas</h3><div class="stack">
+            <button class="btn btn-block" style="margin:0" id="btnNovo2">+ Cadastrar nova quadra</button>
+            <button class="btn btn-block" style="margin:0" id="btnPlanos">Gerenciar planos</button>
+            <button class="btn btn-block" style="margin:0" id="btnExport2">Exportar dados dos clientes</button>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- Dashboard -->
+      <section class="view" data-view="dashboard">
+        <div class="stats s4" id="superStats2"></div>
+        <div class="card"><div class="card-head"><h3>Arrecadação Geral</h3></div><div class="chart-box" style="height:300px"><canvas id="revChart2"></canvas></div></div>
+      </section>
+
+      <!-- Solicitações -->
+      <section class="view" data-view="solicitacoes">
+        <div class="card"><div class="card-head"><h3>Solicitações de Cadastro</h3><p>Quadras que pediram acesso ao sistema</p></div><div id="reqFull" class="stack"></div></div>
+      </section>
+
+      <!-- Planos (editável) -->
+      <section class="view" data-view="planos">
+        <div class="card-head"><div><h3 style="margin:0">Planos e Assinaturas</h3><p class="mut" style="margin:3px 0 0;font-size:12px">Edite valores e regras. Refletem no cadastro do dono e na arrecadação.</p></div><button class="btn btn-primary" id="btnAddPlan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Novo plano</button></div>
+        <div class="grid g-3" id="planGrid" style="margin-top:16px"></div>
+      </section>
+
+      <!-- Financeiro -->
+      <section class="view" data-view="financeiro">
+        <div class="stats s3" id="finStats"></div>
+        <div class="card"><div class="card-head"><h3>Arrecadação por quadra (MRR)</h3></div><div class="tbl-wrap"><table><thead><tr><th>Quadra</th><th>Plano</th><th>Status</th><th>MRR</th></tr></thead><tbody id="finBody"></tbody></table></div></div>
+      </section>
+
     </div>
   </div>
 </div>
 
-<!-- MODAL NOVO CLIENTE -->
-<div class="modal-overlay" id="modal-novo-cliente">
-  <div class="modal modal-form">
-    <h2>&#x2795; Novo Cliente</h2>
-    <div id="msg-novo-cliente" class="msg"></div>
-    <div class="form-group">
-      <label>Nome da Quadra / Cliente</label>
-      <input type="text" id="nc-nome" placeholder="Quadra do João" />
-    </div>
-    <div class="form-group">
-      <label>E-mail de acesso</label>
-      <input type="email" id="nc-email" placeholder="joao@quadra.com" />
-    </div>
-    <div class="form-group">
-      <label>Senha inicial</label>
-      <input type="password" id="nc-senha" placeholder="Mínimo 6 caracteres" />
-    </div>
-    <div class="form-group">
-      <label>Plano</label>
-      <select id="nc-plano">
-        <option value="trial">Trial (30 dias)</option>
-        <option value="mensal">Mensal (30 dias)</option>
-        <option value="trimestral">Trimestral (90 dias)</option>
-        <option value="anual">Anual (365 dias)</option>
-      </select>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="fecharModal('modal-novo-cliente')">Cancelar</button>
-      <button class="btn btn-primary" onclick="criarNovoCliente()">Criar Cliente</button>
-    </div>
+<!-- mobile nav -->
+<nav class="mob-nav" id="mobNav"></nav>
+
+<!-- ===================== MODAIS ===================== -->
+<div class="overlay" id="ovNovo">
+  <div class="modal">
+    <div class="modal-head"><h3 id="novoTitle">Novo Cliente (Quadra)</h3><button class="x" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <form id="novoForm">
+      <div class="modal-body form-grid">
+        <div class="field full"><label>Nome da quadra / estabelecimento</label><input name="name" required placeholder="Ex.: Arena Central Society"></div>
+        <div class="field"><label>Cidade</label><input name="city" value="Ribeirão Preto - SP"></div>
+        <div class="field"><label>Domínio</label><input name="domain" required placeholder="minhaquadra.com"></div>
+        <div class="field"><label>Plano</label><select name="plan" id="novoPlano"></select></div>
+        <div class="field"><label>Status</label><select name="status"><option value="ativo">Ativo</option><option value="inad">Inadimplente</option><option value="susp">Suspenso</option></select></div>
+        <div class="field"><label>Usuário de acesso</label><input name="user" required placeholder="login do dono"></div>
+        <div class="field"><label>Senha</label><input name="pass" required placeholder="senha do dono"></div>
+        <div class="field full" id="credPreview"></div>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn" data-close>Cancelar</button><button type="submit" class="btn btn-primary">Criar quadra e gerar acesso</button></div>
+    </form>
   </div>
 </div>
 
-<!-- MODAL RENOVAR -->
-<div class="modal-overlay" id="modal-renovar">
-  <div class="modal modal-form">
-    <h2>&#x1F504; Renovar Licença</h2>
-    <div id="msg-renovar" class="msg"></div>
-    <p id="renovar-info" style="margin-bottom:16px; color:#555; font-size:0.9rem;"></p>
-    <div class="form-group">
-      <label>Novo Plano</label>
-      <select id="renovar-plano">
-        <option value="30">Mensal (30 dias)</option>
-        <option value="90">Trimestral (90 dias)</option>
-        <option value="365">Anual (365 dias)</option>
-      </select>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="fecharModal('modal-renovar')">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarRenovacao()">Renovar Agora</button>
-    </div>
+<div class="overlay" id="ovInfo">
+  <div class="modal sm">
+    <div class="modal-head"><h3 id="infoTitle">Detalhes</h3><button class="x" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div class="modal-body" id="infoBody"></div>
+    <div class="modal-foot"><button type="button" class="btn" data-close>Fechar</button></div>
   </div>
 </div>
 
-<script src="js/firebase.js"></script>
-<script src="js/admin.js"></script>
+<div class="overlay" id="ovPlan">
+  <div class="modal">
+    <div class="modal-head"><h3 id="planModalTitle">Editar plano</h3><button class="x" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <form id="planForm">
+      <input type="hidden" name="pid">
+      <div class="modal-body form-grid">
+        <div class="field"><label>Nome do plano</label><input name="name" required placeholder="Ex.: Plano Pro"></div>
+        <div class="field"><label>Valor mensal (R$)</label><input type="number" step="0.01" name="price" required value="0"></div>
+        <div class="field"><label>Cor do selo</label><select name="color"><option value="green">Verde</option><option value="blue">Azul</option><option value="purple">Roxo</option><option value="amber">Laranja</option></select></div>
+        <div class="field"><label>Status</label><select name="active"><option value="true">Ativo (visível no cadastro)</option><option value="false">Inativo</option></select></div>
+        <div class="field"><label>Limite de quadras</label><input type="number" name="maxCourts" min="1" value="3"></div>
+        <div class="field"><label>Limite de usuários</label><input type="number" name="maxUsers" min="1" value="5"></div>
+        <div class="field full"><label>Regras / recursos (um por linha)</label><textarea name="features" placeholder="Agenda mensal e avulsa&#10;Controle de caixa e vendas&#10;Dashboards"></textarea></div>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn" id="planDelete" style="margin-right:auto">Excluir</button><button type="button" class="btn" data-close>Cancelar</button><button type="submit" class="btn btn-primary">Salvar plano</button></div>
+    </form>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script>
+/* ================= ADMIN ================= */
+const ST_LABEL = { ativo: 'Ativo', inad: 'Inadimplente', susp: 'Suspenso' };
+const openM = id => $(id).classList.add('open'), closeM = id => $(id).classList.remove('open');
+$$('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('.overlay').classList.remove('open')));
+$$('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+
+/* ---- roteamento login/app ---- */
+function route() {
+  const s = getSession();
+  if (s && s.role === 'super') { $('#loginScreen').classList.add('hidden'); $('#app').classList.remove('hidden'); initApp(); }
+  else { $('#app').classList.add('hidden'); $('#loginScreen').classList.remove('hidden'); }
+  syncThemeIcons();
+}
+$$('.demo-chip').forEach(c => c.addEventListener('click', () => { $('#loginUser').value = c.dataset.u; $('#loginPass').value = c.dataset.p; }));
+$('#loginForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const u = $('#loginUser').value.trim(), p = $('#loginPass').value;
+  if (u === DB.superadmin.user && p === DB.superadmin.pass) { setSession({ role: 'super' }); $('#loginForm').reset(); $('#loginErr').classList.add('hidden'); route(); }
+  else { $('#loginErr').textContent = 'Usuário ou senha inválidos.'; $('#loginErr').classList.remove('hidden'); }
+});
+$('#logout').addEventListener('click', () => { clearSession(); route(); });
+
+/* ---- nav ---- */
+$$('[data-view]').forEach(b => b.addEventListener('click', () => selectView(b.dataset.view)));
+function selectView(v) {
+  $$('[data-view]').forEach(x => x.classList.toggle('active', x.dataset.view === v));
+  $$('.view').forEach(s => s.classList.toggle('active', s.dataset.view === v));
+  $('#mobNav').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mv === v));
+  window.scrollTo({ top: 0, behavior: 'smooth' }); renderCharts();
+}
+
+/* ---- init ---- */
+let sPage = 1; const S_PER = 6;
+function initApp() {
+  Chart.defaults.font.family = 'Inter'; Chart.defaults.color = cssv('--muted');
+  fillPlanSelects(); renderStats(); renderReqs(); renderTable(); renderFinance(); renderPlanos();
+  onThemeChange = renderCharts; renderCharts();
+  buildMobNav();
+  $('#q').oninput = () => { sPage = 1; renderTable(); };
+  $('#fPlano').onchange = () => { sPage = 1; renderTable(); };
+  $('#fStatus').onchange = () => { sPage = 1; renderTable(); };
+}
+function fillPlanSelects() {
+  const opts = DB.plans.map(p => `<option>${p.name}</option>`).join('');
+  $('#fPlano').innerHTML = '<option value="">Todos os Planos</option>' + opts;
+  $('#novoPlano').innerHTML = activePlans().map(p => `<option>${p.name}</option>`).join('');
+}
+
+/* ---- stats ---- */
+function statsData() {
+  const t = DB.tenants;
+  const ativos = t.filter(x => x.status === 'ativo').length;
+  const mrr = t.filter(x => x.status !== 'susp').reduce((s, x) => s + tenantMRR(x), 0);
+  const users = t.reduce((s, x) => s + (x.data.customers.length || 0), 0);
+  return { total: t.length, ativos, mrr, users, anual: mrr * 12 };
+}
+function renderStats() {
+  const d = statsData();
+  const cards = [
+    { ico: 'g-tint', lbl: 'Total de Clientes (Quadras)', val: d.total, foot: `<span class="mut">Ativos:</span> <b class="g-txt">${d.ativos}</b>`, svg: '<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a14 14 0 0 0 0 18M12 3a14 14 0 0 1 0 18"/>' },
+    { ico: 'b-tint', lbl: 'Planos Ativos', val: d.ativos, foot: '<span class="a-txt">Assinaturas em dia</span>', svg: '<path d="M4 6h16v12H4z"/><path d="M4 10h16"/>' },
+    { ico: 'p-tint', lbl: 'Clientes finais', val: d.users, foot: '<span class="mut">Somados de todas as quadras</span>', svg: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/>' },
+    { ico: 'g-tint', lbl: 'Arrecadação MRR', val: money(d.mrr).replace(',00', ''), cls: 'g-txt', foot: '<span class="mut">Mensal recorrente</span>', svg: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2.5 0 0 0-2.5-1.5c-1.5 0-2.7.8-2.7 2s1.2 1.7 2.7 2 2.7.8 2.7 2-1.2 2-2.7 2A2.5 2.5 0 0 1 9.5 15"/>' },
+    { ico: 'a-tint', lbl: 'Projeção anual', val: money(d.anual).replace(',00', ''), cls: 'g-txt', foot: '<span class="mut">MRR × 12</span>', svg: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>' }
+  ];
+  const cell = c => `<div class="stat"><div class="ico ${c.ico}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${c.svg}</svg></div><div class="lbl">${c.lbl}</div><div class="val ${c.cls || ''}">${c.val}</div><div class="foot">${c.foot}</div></div>`;
+  $('#superStats').innerHTML = cards.map(cell).join('');
+  $('#superStats2').innerHTML = cards.slice(0, 4).map(cell).join('');
+}
+
+/* ---- solicitações ---- */
+function renderReqs() {
+  const list = DB.requests;
+  $('#reqCount').textContent = list.length; $('#reqBadge').textContent = list.length;
+  const row = r => `<div class="item" style="flex-direction:column;align-items:stretch;gap:4px">
+    <div style="display:flex;justify-content:space-between"><strong>${r.name}</strong><span class="mut" style="font-size:11px">${r.time}</span></div>
+    <div class="mut" style="font-size:11.5px">${r.dom} ${r.city ? '· ' + r.city : ''}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+      <span class="badge ${planBadgeClass(r.plan)}">${r.plan}</span>
+      <div style="display:flex;gap:6px"><button class="btn btn-sm btn-primary" data-approve="${r.id}">Aprovar</button><button class="btn btn-sm" data-reject="${r.id}">Recusar</button></div>
+    </div></div>`;
+  $('#reqList').innerHTML = list.length ? list.slice(0, 4).map(row).join('') : '<div class="empty">Nenhuma solicitação.</div>';
+  $('#reqFull').innerHTML = list.length ? list.map(row).join('') : '<div class="empty">Nenhuma solicitação pendente.</div>';
+  $$('[data-approve]').forEach(b => b.onclick = () => {
+    const r = DB.requests.find(x => x.id == b.dataset.approve);
+    openNovo({ name: r.name, domain: r.dom, plan: r.plan, city: r.city, user: r.login && r.login.user, pass: r.login && r.login.pass, _reqId: r.id });
+  });
+  $$('[data-reject]').forEach(b => b.onclick = () => { DB.requests = DB.requests.filter(x => x.id != b.dataset.reject); saveDB(); renderReqs(); toast('Solicitação recusada'); });
+}
+
+/* ---- tabela clientes ---- */
+function filtered() {
+  const q = $('#q').value.toLowerCase().trim(), fp = $('#fPlano').value, fs = $('#fStatus').value;
+  return DB.tenants.filter(t => {
+    if (q && !(t.name.toLowerCase().includes(q) || t.domain.toLowerCase().includes(q) || t.city.toLowerCase().includes(q))) return false;
+    if (fp && t.plan !== fp) return false;
+    if (fs && t.status !== fs) return false;
+    return true;
+  });
+}
+function renderTable() {
+  const data = filtered(), pages = Math.max(1, Math.ceil(data.length / S_PER));
+  if (sPage > pages) sPage = pages;
+  const slice = data.slice((sPage - 1) * S_PER, sPage * S_PER);
+  $('#tbody').innerHTML = slice.length ? slice.map(t => `
+    <tr>
+      <td><div class="cli"><div class="av" style="background:${t.color}22;color:${t.color}">${initials(t.name)}</div><div><div class="nm">${t.name}</div><div class="ct">${t.city}</div></div></div></td>
+      <td class="mut">${t.domain}</td>
+      <td><span class="badge ${planBadgeClass(t.plan)}">${t.plan}</span></td>
+      <td><span class="st ${t.status}"><span class="d"></span>${ST_LABEL[t.status]}</span></td>
+      <td class="mut">${t.data.customers.length} clientes</td>
+      <td><b>${money(tenantMRR(t))}</b></td>
+      <td><div class="act">
+        <button title="Ver acesso" data-op="info" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button title="${t.status === 'susp' ? 'Reativar' : 'Suspender'}" data-op="toggle" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${t.status === 'susp' ? '<path d="M5 3l14 9-14 9z"/>' : '<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>'}</svg></button>
+        <button class="del" title="Excluir" data-op="del" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma quadra encontrada.</td></tr>';
+  const from = data.length ? ((sPage - 1) * S_PER + 1) : 0, to = Math.min(sPage * S_PER, data.length);
+  $('#pagInfo').textContent = `Mostrando ${from} a ${to} de ${DB.tenants.length} quadras`;
+  const pg = $('#pages'); pg.innerHTML = '';
+  const mk = (l, p, on, dis) => { const b = document.createElement('button'); b.textContent = l; if (on) b.className = 'on'; b.disabled = dis; b.onclick = () => { sPage = p; renderTable(); }; pg.appendChild(b); };
+  mk('‹', Math.max(1, sPage - 1), false, sPage === 1);
+  for (let i = 1; i <= pages; i++) mk(i, i, i === sPage, false);
+  mk('›', Math.min(pages, sPage + 1), false, sPage === pages);
+  bindTableActions();
+}
+function bindTableActions() {
+  $$('#tbody [data-op]').forEach(b => b.onclick = () => {
+    const t = DB.tenants.find(x => x.id == b.dataset.id), op = b.dataset.op;
+    if (op === 'del') { if (confirm(`Excluir "${t.name}" e todos os seus dados?`)) { DB.tenants = DB.tenants.filter(x => x.id != t.id); saveDB(); renderStats(); renderTable(); renderCharts(); renderFinance(); toast('Quadra excluída'); } }
+    else if (op === 'toggle') { t.status = t.status === 'susp' ? 'ativo' : 'susp'; saveDB(); renderStats(); renderTable(); renderCharts(); renderFinance(); toast(t.status === 'susp' ? 'Acesso suspenso' : 'Acesso reativado'); }
+    else if (op === 'info') {
+      $('#infoTitle').textContent = t.name;
+      $('#infoBody').innerHTML = `<div class="stack">
+        <div class="item"><div><div class="sub">Cidade</div><div class="nm">${t.city}</div></div></div>
+        <div class="item"><div><div class="sub">Domínio</div><div class="nm">${t.domain}</div></div><span class="badge ${planBadgeClass(t.plan)}">${t.plan}</span></div>
+        <div class="cred-box"><div style="font-weight:700;margin-bottom:6px">Credenciais de acesso ao portal</div>
+          <div class="row"><span class="mut">Usuário</span><code>${t.login.user}</code></div>
+          <div class="row"><span class="mut">Senha</span><code>${t.login.pass}</code></div></div>
+        <div class="mut" style="font-size:12px">O dono acessa em <b>portal.html</b> com essas credenciais.</div>
+      </div>`;
+      openM('#ovInfo');
+    }
+  });
+}
+
+/* ---- novo cliente / aprovação ---- */
+function slugUser(name) { return (name || '').toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '').slice(0, 10) || 'quadra'; }
+let pendingReqId = null;
+function openNovo(pre) {
+  const f = $('#novoForm'); f.reset(); $('#credPreview').innerHTML = ''; pendingReqId = (pre && pre._reqId) || null;
+  fillPlanSelects();
+  const nameInput = f.querySelector('[name="name"]');
+  if (pre) { nameInput.value = pre.name || ''; f.domain.value = pre.domain || ''; if (pre.city) f.city.value = pre.city; if (pre.plan) f.plan.value = pre.plan; }
+  const u = (pre && pre.user) || slugUser(nameInput.value || 'quadra');
+  f.user.value = u; f.pass.value = (pre && pre.pass) || (u + '123');
+  $('#novoTitle').textContent = pendingReqId ? 'Aprovar solicitação' : 'Novo Cliente (Quadra)';
+  openM('#ovNovo');
+}
+$('#btnNovo').onclick = () => openNovo(); $('#btnNovo2').onclick = () => openNovo();
+$('#novoForm').querySelector('[name="name"]').addEventListener('input', e => { const f = $('#novoForm'); const u = slugUser(e.target.value); f.user.value = u; f.pass.value = u + '123'; });
+$('#novoForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target, o = Object.fromEntries(new FormData(f).entries());
+  if (DB.tenants.some(t => t.login.user === o.user)) { toast('Já existe uma quadra com esse usuário', true); return; }
+  const data = seedTenantData(defaultProducts()); data.settings.quadraName = o.name; data.schedules = []; data.customers = []; data.sales = [];
+  const id = uid();
+  DB.tenants.unshift({ id, name: o.name, city: o.city || '—', domain: o.domain, plan: o.plan, status: o.status, due: brDate(todayISO()), login: { user: o.user, pass: o.pass }, color: AVA[DB.tenants.length % AVA.length], data });
+  if (pendingReqId) { DB.requests = DB.requests.filter(x => x.id != pendingReqId); pendingReqId = null; }
+  saveDB();
+  $('#credPreview').innerHTML = `<div class="cred-box"><div style="font-weight:700;margin-bottom:6px">✅ Quadra criada! Repasse o acesso ao dono:</div><div class="row"><span class="mut">Usuário</span><code>${o.user}</code></div><div class="row"><span class="mut">Senha</span><code>${o.pass}</code></div></div>`;
+  sPage = 1; renderStats(); renderTable(); renderCharts(); renderFinance(); renderReqs();
+  toast('Quadra cadastrada e acesso gerado');
+  setTimeout(() => closeM('#ovNovo'), 1900);
+});
+
+/* ---- charts ---- */
+function renderCharts() {
+  if ($('#app').classList.contains('hidden')) return;
+  clearCharts();
+  const t = DB.tenants;
+  const planCount = {}; DB.plans.forEach(p => planCount[p.name] = 0); t.forEach(x => planCount[x.plan] = (planCount[x.plan] || 0) + 1);
+  const statusCount = { ativo: 0, inad: 0, susp: 0 }; t.forEach(x => statusCount[x.status]++);
+  const colOf = { green: cssv('--green'), blue: cssv('--blue'), purple: cssv('--purple'), amber: cssv('--amber') };
+  if ($('#planChart')) {
+    const names = DB.plans.map(p => p.name);
+    CHARTS.push(donut($('#planChart'), names.map(n => planCount[n] || 0), DB.plans.map(p => colOf[p.color] || cssv('--blue'))));
+    $('#planLegend').innerHTML = legendHTML(DB.plans.map(p => ({ c: colOf[p.color] || cssv('--blue'), l: p.name, v: planCount[p.name] || 0 })));
+  }
+  if ($('#statusChart')) {
+    CHARTS.push(donut($('#statusChart'), [statusCount.ativo, statusCount.inad, statusCount.susp], [cssv('--green'), cssv('--red'), cssv('--amber')]));
+    $('#statusLegend').innerHTML = legendHTML([{ c: cssv('--green'), l: 'Ativos', v: statusCount.ativo }, { c: cssv('--red'), l: 'Inadimplentes', v: statusCount.inad }, { c: cssv('--amber'), l: 'Suspensos', v: statusCount.susp }]);
+  }
+  const mrr = t.filter(x => x.status !== 'susp').reduce((s, x) => s + tenantMRR(x), 0);
+  const series = [.62, .7, .78, .85, .93, 1].map(f => Math.round(mrr * f / 100) / 10);
+  const lbls = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+  if ($('#revChart')) CHARTS.push(line($('#revChart'), lbls, series, v => 'R$ ' + v + 'k'));
+  if ($('#revChart2')) CHARTS.push(line($('#revChart2'), lbls, series, v => 'R$ ' + v + 'k'));
+}
+
+/* ---- financeiro ---- */
+function renderFinance() {
+  const t = DB.tenants;
+  const soma = st => t.filter(x => x.status === st).reduce((s, x) => s + tenantMRR(x), 0);
+  $('#finStats').innerHTML = `
+    <div class="stat"><div class="lbl">Receita ativa (MRR)</div><div class="val g-txt">${money(soma('ativo'))}</div><div class="foot mut">Assinaturas em dia</div></div>
+    <div class="stat"><div class="lbl">Em atraso</div><div class="val r-txt">${money(soma('inad'))}</div><div class="foot mut">Inadimplentes</div></div>
+    <div class="stat"><div class="lbl">Suspenso</div><div class="val a-txt">${money(soma('susp'))}</div><div class="foot mut">Sem acesso</div></div>`;
+  $('#finBody').innerHTML = t.map(x => `<tr><td class="nm">${x.name}</td><td><span class="badge ${planBadgeClass(x.plan)}">${x.plan}</span></td><td><span class="st ${x.status}"><span class="d"></span>${ST_LABEL[x.status]}</span></td><td><b>${money(tenantMRR(x))}</b></td></tr>`).join('');
+}
+
+/* ---- planos (CRUD) ---- */
+const COLOR_VAR = { green: '--green', blue: '--blue', purple: '--purple', amber: '--amber' };
+function renderPlanos() {
+  const usados = {}; DB.tenants.forEach(t => usados[t.plan] = (usados[t.plan] || 0) + 1);
+  $('#planGrid').innerHTML = DB.plans.map(p => `
+    <div class="plan-card" style="border-color:var(${COLOR_VAR[p.color] || '--blue'})">
+      <div class="top">
+        <div><h4>${p.name}</h4><div class="mut" style="font-size:11.5px;margin-top:2px">${usados[p.name] || 0} quadra(s) · ${p.active !== false ? 'ativo' : 'inativo'}</div></div>
+        <span class="badge ${planBadgeClass(p.name)}">${p.active !== false ? 'Visível' : 'Oculto'}</span>
+      </div>
+      <div class="price">${money(p.price).replace(',00', '')}<small>/mês</small></div>
+      <div class="rules"><span>Quadras: <b>${p.maxCourts >= 99 ? '∞' : p.maxCourts}</b></span><span>Usuários: <b>${p.maxUsers >= 99 ? '∞' : p.maxUsers}</b></span></div>
+      <ul>${(p.features || []).map(f => `<li>${f}</li>`).join('')}</ul>
+      <div class="foot"><button class="btn btn-sm btn-primary" data-edit-plan="${p.id}" style="flex:1;justify-content:center">Editar</button></div>
+    </div>`).join('');
+  $$('[data-edit-plan]').forEach(b => b.onclick = () => openPlan(DB.plans.find(p => p.id === b.dataset.editPlan)));
+}
+function openPlan(p) {
+  const f = $('#planForm');
+  $('#planModalTitle').textContent = p ? 'Editar plano' : 'Novo plano';
+  $('#planDelete').style.display = p ? '' : 'none';
+  f.querySelector('[name="pid"]').value = p ? p.id : '';
+  f.querySelector('[name="name"]').value = p ? p.name : '';
+  f.price.value = p ? p.price : 0;
+  f.color.value = p ? p.color : 'green';
+  f.active.value = p ? String(p.active !== false) : 'true';
+  f.maxCourts.value = p ? p.maxCourts : 3;
+  f.maxUsers.value = p ? p.maxUsers : 5;
+  f.features.value = p ? (p.features || []).join('\n') : '';
+  openM('#ovPlan');
+}
+$('#btnAddPlan').onclick = () => openPlan(null);
+$('#btnPlanos').onclick = () => selectView('planos');
+$('#planDelete').onclick = () => {
+  const id = $('#planForm').querySelector('[name="pid"]').value; const p = DB.plans.find(x => x.id === id);
+  if (!p) return;
+  if (DB.tenants.some(t => t.plan === p.name)) { toast('Há quadras usando este plano. Migre-as antes.', true); return; }
+  if (confirm(`Excluir o plano "${p.name}"?`)) { DB.plans = DB.plans.filter(x => x.id !== id); saveDB(); closeM('#ovPlan'); fillPlanSelects(); renderPlanos(); renderCharts(); toast('Plano excluído'); }
+};
+$('#planForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const o = Object.fromEntries(new FormData(e.target).entries());
+  const features = o.features.split('\n').map(s => s.trim()).filter(Boolean);
+  const payload = { name: o.name.trim(), price: +o.price, color: o.color, active: o.active === 'true', maxCourts: +o.maxCourts, maxUsers: +o.maxUsers, features };
+  if (o.pid) {
+    const p = DB.plans.find(x => x.id === o.pid); const oldName = p.name;
+    Object.assign(p, payload);
+    if (oldName !== p.name) { // migra referências
+      DB.tenants.forEach(t => { if (t.plan === oldName) t.plan = p.name; });
+      DB.requests.forEach(r => { if (r.plan === oldName) r.plan = p.name; });
+    }
+  } else {
+    if (DB.plans.some(x => x.name === payload.name)) { toast('Já existe um plano com esse nome', true); return; }
+    DB.plans.push({ id: 'p' + uid(), ...payload });
+  }
+  saveDB(); closeM('#ovPlan');
+  fillPlanSelects(); renderPlanos(); renderStats(); renderTable(); renderFinance(); renderCharts(); renderReqs();
+  toast('Plano salvo');
+});
+
+/* ---- export ---- */
+function exportClientes() {
+  const rows = [['Nome', 'Cidade', 'Dominio', 'Plano', 'Status', 'Usuario', 'Senha', 'MRR'],
+    ...DB.tenants.map(t => [t.name, t.city, t.domain, t.plan, ST_LABEL[t.status], t.login.user, t.login.pass, tenantMRR(t)])];
+  const csv = rows.map(r => r.map(x => `"${x}"`).join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'quadras.csv'; a.click(); toast('Exportado quadras.csv');
+}
+$('#btnExport').onclick = exportClientes; $('#btnExport2').onclick = exportClientes;
+
+/* ---- mobile nav ---- */
+function buildMobNav() {
+  const items = [['clientes', 'Clientes', '<circle cx="12" cy="12" r="9"/>'], ['solicitacoes', 'Solicit.', '<path d="M5 3h9l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>'], ['planos', 'Planos', '<path d="M4 6h16v12H4z"/>'], ['financeiro', 'Financeiro', '<circle cx="12" cy="12" r="9"/><path d="M12 8v8"/>']];
+  $('#mobNav').innerHTML = items.map((it, i) => `<button class="${i === 0 ? 'active' : ''}" data-mv="${it[0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${it[2]}</svg>${it[1]}</button>`).join('');
+  $('#mobNav').querySelectorAll('[data-mv]').forEach(b => b.onclick = () => selectView(b.dataset.mv));
+}
+
+/* ---- sincroniza entre abas (dono cadastra no portal → aparece aqui) ---- */
+window.addEventListener('storage', e => {
+  if (e.key === DB_KEY && !$('#app').classList.contains('hidden')) {
+    reloadDB(); fillPlanSelects(); renderStats(); renderReqs(); renderTable(); renderFinance(); renderPlanos(); renderCharts();
+  }
+});
+
+/* ---- start ---- */
+initTheme(); bindTheme(); route();
+</script>
 </body>
 </html>
