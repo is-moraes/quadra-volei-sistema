@@ -211,12 +211,19 @@ $('#loginForm').addEventListener('submit', e => {
 $('#logout').addEventListener('click', () => { clearSession(); route(); });
 
 /* ---- nav ---- */
-$$('[data-view]').forEach(b => b.addEventListener('click', () => selectView(b.dataset.view)));
+/* IMPORTANTE: só os botões do menu (.nav-item). As <section> também usam
+   data-view; se escutássemos nelas, qualquer clique no conteúdo trocaria
+   de view e rolaria a página pro topo. */
+let currentView = 'clientes';
+$$('.nav-item[data-view]').forEach(b => b.addEventListener('click', () => selectView(b.dataset.view)));
 function selectView(v) {
-  $$('[data-view]').forEach(x => x.classList.toggle('active', x.dataset.view === v));
+  const changed = v !== currentView;
+  currentView = v;
+  $$('.nav-item[data-view]').forEach(x => x.classList.toggle('active', x.dataset.view === v));
   $$('.view').forEach(s => s.classList.toggle('active', s.dataset.view === v));
   $('#mobNav').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mv === v));
-  window.scrollTo({ top: 0, behavior: 'smooth' }); renderCharts();
+  if (changed) window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderCharts();
 }
 
 /* ---- init ---- */
