@@ -322,14 +322,21 @@ $('#loginForm').addEventListener('submit', e => {
 $('#logout').addEventListener('click', () => { clearSession(); route(); });
 
 /* ---- nav ---- */
-$$('#app [data-view]').forEach(b => b.addEventListener('click', () => selectView(b.dataset.view)));
+/* IMPORTANTE: só os botões do menu (.nav-item). As <section> também usam
+   data-view; se escutássemos nelas, qualquer clique no conteúdo trocaria
+   de view e rolaria a página pro topo. */
+let currentView = 'dashboard';
+$$('#app .nav-item[data-view]').forEach(b => b.addEventListener('click', () => selectView(b.dataset.view)));
 function selectView(v) {
-  $$('#app [data-view]').forEach(x => x.classList.toggle('active', x.dataset.view === v));
+  const changed = v !== currentView;
+  currentView = v;
+  $$('#app .nav-item[data-view]').forEach(x => x.classList.toggle('active', x.dataset.view === v));
   $$('.view').forEach(s => s.classList.toggle('active', s.dataset.view === v));
   $('#mobNav').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mv === v));
   const titles = { dashboard: ['Painel operacional', 'Visão geral da sua quadra'], agenda: ['Agenda', 'Horários mensais e avulsos'], clientes: ['Clientes', 'Mensalistas e avulsos'], vendas: ['Vendas & Mercadorias', 'Controle de vendas do local'], admin: ['Administração', 'Configurações restritas ao proprietário'] };
   if (titles[v]) { $('#tTitle').textContent = titles[v][0]; $('#tSub').textContent = titles[v][1]; }
-  window.scrollTo({ top: 0, behavior: 'smooth' }); renderTenantCharts();
+  if (changed) window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderTenantCharts();
 }
 
 /* ---- init tenant ---- */
